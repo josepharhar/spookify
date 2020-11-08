@@ -71,7 +71,6 @@ server.get('/callback', async (req, res) => {
     console.log(`Sucessfully retreived access token. Expires in ${expires_in} s.`);
     res.writeHead(307, {location: `/frontend?access_token=${access_token}&refresh_token=${refresh_token}&expires_in=${expires_in}`});
     res.end('hello from /callback');
-    //gotAccessToken();
 
     setInterval(async () => {
       const data = await spotifyApi.refreshAccessToken();
@@ -89,16 +88,3 @@ server.get('/callback', async (req, res) => {
 });
 
 server.listen(48880, () => console.log('http server listening'));
-
-async function gotAccessToken() {
-  console.log('gotAccessToken, calling stuff');
-
-  console.log('calling getMe()...');
-  const me = await spotifyApi.getMe();
-  //console.log('me: ' + JSON.stringify(me, null, 2));
-  const userId = me.body.id;
-
-  console.log(`calling getUserPlaylists("${userId}")`);
-  const playlists = await spotifyApi.getUserPlaylists(userId);
-  console.log('playlists: ' + JSON.stringify(playlists.body, null, 2));
-}

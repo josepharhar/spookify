@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "browserify": "browserify requireSpotifyApi.js -o frontend/gen/requireSpotifyApi.js"
+    "start": "browserify requireSpotifyApi.js -o frontend/gen/requireSpotifyApi.js && node server.js"
   },
   "dependencies": {
     "browserify": "^17.0.0",

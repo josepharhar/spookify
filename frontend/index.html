@@ -1,8 +1,20 @@
 <!DOCTYPE html>
 <body>
-hello world
+
+<style>
+table, td {
+  border: 1px solid #333;
+}
+thead, tfoot {
+  background-color: #333;
+  color: #fff;
+}
+</style>
 
 <script src="/frontend/gen/requireSpotifyApi.js"></script>
+
+<div id=nav></div>
+<div id=main></div>
 
 <script>
 const urlParams = new URLSearchParams(window.location.search);
@@ -11,11 +23,69 @@ const refreshToken = urlParams.get('refresh_token');
 const expiresIn = urlParams.get('expires_in');
 // TODO use refresh stuff
 
+async function renderNav() {
+  nav.innerHTML = '';
+  const playlistsButton = document.createElement('button');
+  playlistsButton.textContent = 'view all playlists';
+  playlistsButton.onclick = renderPlaylists;
+  nav.appendChild(playlistsButton);
+}
+
+async function renderPlaylists() {
+  main.innerHTML = `<div>loading...</div>`;
+
+  const progressDiv = document.createElement('div');
+  main.appendChild(progressDiv);
+
+  function updateProgress(numLoaded, numTotal) {
+    if (!numTotal) {
+      progress.textContent = `${numLoaded} playlists loaded...`;
+    } else {
+      progress.textContent = `${numLoaded}/${numTotal} playlists loaded...`;
+    }
+  }
+
+  let playlists = [];
+  let offset = 0;
+  while (true) {
+    const playlistsResponse = await api.getUserPlaylists(userId, {limit: 50, offset: offset});
+    console.log('getUserPlaylists:', playlistsResponse);
+    playlists = playlists.concat(playlistsResponse.body.items);
+    offset += playlistsResponse.body.items.length;
+    updateProgress(offset, playlistsResponse.total);
+    if (!playlistsResponse.body.next)
+      break;
+  }
+
+  main.innerHTML = '';
+
+  const table = document.createElement('table');
+  main.appendChild(table);
+  table.innerHTML = `<thead><tr><td>name</td><td>id</td></tr></thead>`;
+  const tbody = document.createElement('tbody');
+  table.appendChild(tbody);
+  for (const playlist of playlists) {
+    const row = document.createElement('tr');
+    tbody.appendChild(row);
+
+    const name = document.createElement('td');
+    name.textContent = playlist.name;
+    row.appendChild(name);
+
+    const id = document.createElement('td');
+    id.textContent = playlist.id;
+    row.appendChild(id);
+  }
+}
+
 (async () => {
-  const api = new window.SpotifyWebApi();
+  window.api = new window.SpotifyWebApi();
   api.setAccessToken(accessToken);
   const me = await api.getMe();
   console.log('me:', me);
+  window.userId = me.body.id;
+
+  renderNav();
 })();
 
 </script>

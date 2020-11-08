@@ -1,5 +1,21 @@
 <!DOCTYPE html>
+<body>
 hello world
 
+<script src="/frontend/gen/requireSpotifyApi.js"></script>
+
 <script>
+const urlParams = new URLSearchParams(window.location.search);
+const accessToken = urlParams.get('access_token');
+const refreshToken = urlParams.get('refresh_token');
+const expiresIn = urlParams.get('expires_in');
+// TODO use refresh stuff
+
+(async () => {
+  const api = new window.SpotifyWebApi();
+  api.setAccessToken(accessToken);
+  const me = await api.getMe();
+  console.log('me:', me);
+})();
+
 </script>

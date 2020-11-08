@@ -69,7 +69,8 @@ server.get('/callback', async (req, res) => {
     console.log('refresh_token:', refresh_token);
 
     console.log(`Sucessfully retreived access token. Expires in ${expires_in} s.`);
-    res.writeHead(307, {location: `/frontend?access_token=${access_token}&refresh_token=${refresh_token}`});
+    res.writeHead(307, {location: `/frontend?access_token=${access_token}&refresh_token=${refresh_token}&expires_in=${expires_in}`});
+    res.end('hello from /callback');
     //gotAccessToken();
 
     setInterval(async () => {

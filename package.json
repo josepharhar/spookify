@@ -1,6 +1,11 @@
 {
+  "scripts": {
+    "browserify": "browserify requireSpotifyApi.js -o frontend/gen/requireSpotifyApi.js"
+  },
   "dependencies": {
+    "browserify": "^17.0.0",
     "express": "^4.17.1",
-    "spotify-web-api-node": "^5.0.0"
+    "spotify-web-api-node": "^5.0.0",
+    "uniq": "^1.0.1"
   }
 }

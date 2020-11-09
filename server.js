@@ -87,4 +87,10 @@ server.get('/callback', async (req, res) => {
   }
 });
 
+server.get('/recipies', (req, res) => {
+});
+
+server.post('/recipies', (req, res) => {
+});
+
 server.listen(48880, () => console.log('http server listening'));

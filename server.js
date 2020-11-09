@@ -72,14 +72,14 @@ server.get('/callback', async (req, res) => {
     res.writeHead(307, {location: `/frontend?access_token=${access_token}&refresh_token=${refresh_token}&expires_in=${expires_in}`});
     res.end('hello from /callback');
 
-    setInterval(async () => {
+    /*setInterval(async () => {
       const data = await spotifyApi.refreshAccessToken();
       const access_token = data.body['access_token'];
 
       console.log('The access token has been refreshed!');
       console.log('access_token:', access_token);
       spotifyApi.setAccessToken(access_token);
-    }, expires_in / 2 * 1000);
+    }, expires_in / 2 * 1000);*/
 
   } catch (error) {
     console.error('Error getting Tokens:', error);
@@ -87,10 +87,46 @@ server.get('/callback', async (req, res) => {
   }
 });
 
-server.get('/recipies', (req, res) => {
+const recipiesFilename = 'recipies.json';
+
+server.get('/recipies', async (req, res) => {
+  let fileContent;
+  try {
+    try {
+      fileContent = await fs.promises.readFile(recipiesFilename);
+    } catch (err) {
+      await fs.promises.writeFile(recipiesFilename, '{}');
+      fileContent = await fs.promises.readFile(recipiesFilename);
+    }
+  } catch (err) {
+    res.writeHead(400, {'content-type': 'text/plain'});
+    res.end(err);
+    return;
+  }
+
+  res.writeHead(200, {'content-type': 'application/json'});
+  res.end(fileContent);
 });
 
-server.post('/recipies', (req, res) => {
+async function streamToString(str) {
+  return new Promise((resolve, reject) => {
+    let output = '';
+    str.on('data', chunk => output += chunk);
+    str.on('error', reject);
+    str.on('end', resolve(output));
+  });
+}
+
+server.post('/recipies', async (req, res) => {
+  try {
+    await fs.promises.writeFile(recipiesFilename, await streamToSTring(req));
+  } catch (err) {
+    res.writeHead(400, {'content-type': 'text/plain'});
+    res.end(err);
+    return;
+  }
+  res.writeHead(200, {'content-type': 'application/json'});
+  res.end();
 });
 
 server.listen(48880, () => console.log('http server listening'));

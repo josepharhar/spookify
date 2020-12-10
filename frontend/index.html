@@ -26,6 +26,7 @@ const expiresIn = urlParams.get('expires_in');
 async function renderPlaylists(main) {
   const loadButton = document.createElement('button');
   loadButton.textContent = 'load playlist id<->name table';
+  main.appendChild(loadButton);
   await new Promise(resolve => loadButton.onclick = resolve);
 
   main.innerHTML = `<div>loading...</div>`;
@@ -80,6 +81,27 @@ async function renderPlaylists(main) {
     const id = document.createElement('td');
     id.textContent = playlist.id;
     row.appendChild(id);
+  }
+}
+
+async function renderCreateRecipe(main) {
+  main.innerHTML = '';
+  main.style = 'display: inline-block; border: solid black 1px;';
+
+  const title = document.createElement('h3');
+  title.textContent = 'Create Recipe';
+  title.style = 'display: block';
+  main.appendChild(title);
+
+  const stepsList = document.createElement('ol');
+  main.appendChild(stepsList);
+
+
+
+  function addStep() {
+    const li = document.createElement('li');
+    stepsList.appendChild(li);
+    li.textContent = 'step';
   }
 }
 

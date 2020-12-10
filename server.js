@@ -87,16 +87,16 @@ server.get('/callback', async (req, res) => {
   }
 });
 
-const recipiesFilename = 'recipies.json';
+const recipesFilename = 'recipes.json';
 
-server.get('/recipies', async (req, res) => {
+server.get('/recipes', async (req, res) => {
   let fileContent;
   try {
     try {
-      fileContent = await fs.promises.readFile(recipiesFilename);
+      fileContent = await fs.promises.readFile(recipesFilename);
     } catch (err) {
-      await fs.promises.writeFile(recipiesFilename, '{}');
-      fileContent = await fs.promises.readFile(recipiesFilename);
+      await fs.promises.writeFile(recipesFilename, '{}');
+      fileContent = await fs.promises.readFile(recipesFilename);
     }
   } catch (err) {
     res.writeHead(400, {'content-type': 'text/plain'});
@@ -117,9 +117,9 @@ async function streamToString(str) {
   });
 }
 
-server.post('/recipies', async (req, res) => {
+server.post('/recipes', async (req, res) => {
   try {
-    await fs.promises.writeFile(recipiesFilename, await streamToSTring(req));
+    await fs.promises.writeFile(recipesFilename, await streamToSTring(req));
   } catch (err) {
     res.writeHead(400, {'content-type': 'text/plain'});
     res.end(err);

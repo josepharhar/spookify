@@ -23,9 +23,16 @@ export async function runRecipe(recipe: Recipe) {
       case 'add-playlist':
         const addPlaylistStep: AddPlaylistStep = <AddPlaylistStep>step;
         const {playlistId} = addPlaylistStep;
+
+        // TODO
+        // 1. download all songs in playlistId
+        // 2. add them to songIds
         break;
 
       case 'filter-out-unliked':
+        // TODO 
+        // 1. get liked songs
+        // 2. for each song, check if its in liked songs
         break;
     }
   }

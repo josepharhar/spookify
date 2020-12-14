@@ -1,4 +1,11 @@
 {
-  "rootDir": "src",
-  "outDir": "gen"
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "gen",
+    "lib": ["esnext", "dom"],
+    "target": "esnext"
+  },
+  "include": [
+    "."
+  ]
 }

@@ -90,17 +90,30 @@ server.get('/callback', async (req, res) => {
 const recipesFilename = 'recipes.json';
 
 server.get('/recipes', async (req, res) => {
+  async function createAndReadEmptyFile() {
+    await fs.promises.writeFile(recipesFilename, JSON.stringify({recipes: []}));
+    return await fs.promises.readFile(recipesFilename);
+  }
+
   let fileContent;
   try {
     try {
       fileContent = await fs.promises.readFile(recipesFilename);
+      try {
+        JSON.parse(fileContent);
+      } catch (error) {
+        console.log('failed to JSON.parse recipes.json. Moving to recipes.json.broken.');
+        await fs.promises.rename(recipesFilename, recipesFilename + '.broken');
+        fileContent = await createAndReadEmptyFile();
+      }
+      console.log("get recipes fileContent: " + fileContent);
     } catch (err) {
-      await fs.promises.writeFile(recipesFilename, '{}');
-      fileContent = await fs.promises.readFile(recipesFilename);
+      fileContent = await createAndReadEmptyFile();
     }
   } catch (err) {
+    console.log('err: ' + err);
     res.writeHead(400, {'content-type': 'text/plain'});
-    res.end(err);
+    res.end(err.toString());
     return;
   }
 
@@ -119,7 +132,7 @@ async function streamToString(str) {
 
 server.post('/recipes', async (req, res) => {
   try {
-    await fs.promises.writeFile(recipesFilename, await streamToSTring(req));
+    await fs.promises.writeFile(recipesFilename, await streamToString(req));
   } catch (err) {
     res.writeHead(400, {'content-type': 'text/plain'});
     res.end(err);

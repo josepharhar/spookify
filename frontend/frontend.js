@@ -102,18 +102,29 @@ async function renderRecipes(main) {
   const saveButton = document.createElement('button');
   saveButton.textContent = 'Save';
   saveButton.onclick = async () => {
+    let json;
     try {
-      const json = JSON.parse(textarea.value);
+      json = JSON.parse(textarea.value);
     } catch (error) {
       console.log('error parsing user supplied json:', error);
       throw error;
     }
     // TODO should this be throttled/locked?
+    console.log('calling saverecipes');
     await saveRecipes(json);
   };
   main.appendChild(saveButton);
 
   loadButton.click();
+
+  const runButton = document.createElement('button');
+  runButton.textContent = 'Run all';
+  runButton.onclick = async () => {
+    
+  };
+}
+
+async function executeRecipe() {
 }
 
 async function loadRecipes() {

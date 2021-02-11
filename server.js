@@ -129,4 +129,5 @@ server.post('/recipes', async (req, res) => {
   res.end();
 });
 
-server.listen(48880, () => console.log('http server listening'));
+const port = 48880;
+server.listen(port, () => console.log('http server listening on port ' + port));

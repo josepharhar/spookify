@@ -86,6 +86,69 @@ async function renderCreateRecipe(main) {
   }
 }
 
+async function renderRecipes(main) {
+  const textarea = document.createElement('textarea');
+  main.appendChild(textarea);
+
+  main.appendChild(document.createElement('br'));
+
+  const loadButton = document.createElement('button');
+  loadButton.textContent = 'Load';
+  loadButton.onclick = async () => {
+    textarea.value = JSON.stringify(await loadRecipes(), null, 2);
+  };
+  main.appendChild(loadButton);
+
+  const saveButton = document.createElement('button');
+  saveButton.textContent = 'Save';
+  saveButton.onclick = async () => {
+    try {
+      const json = JSON.parse(textarea.value);
+    } catch (error) {
+      console.log('error parsing user supplied json:', error);
+      throw error;
+    }
+    // TODO should this be throttled/locked?
+    await saveRecipes(json);
+  };
+  main.appendChild(saveButton);
+
+  loadButton.click();
+}
+
+async function loadRecipes() {
+  try {
+    const response = await fetch('/recipes');
+    const recipes = await response.json();
+    console.log('loadRecipes /recipes response:\n'
+      + `${response.status} ${response.statusText}\n\n${JSON.stringify(recipes, null, 2)}`);
+    return recipes;
+  } catch (error) {
+    console.log('error loading recipes:', error);
+    throw error;
+  }
+}
+
+async function saveRecipes(recipes) {
+  try {
+    const response = await fetch('/recipes', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify(recipes)
+    });
+
+    const responseText = await response.text();
+    console.log('saveRecipes /recipes response:\n'
+      + `${response.status} ${response.statusText}\n\n${responseText}`);
+
+  } catch (error) {
+    console.log('saveRecipes fetch error:', error);
+    throw error;
+  }
+}
+
 function renderGeneratePlaylists(main) {
   main.innerHTML = '';
 
@@ -166,10 +229,15 @@ async function generatePlaylists(
   console.log('me:', me);
   window.userId = me.body.id;
 
-  const generate = document.createElement('div');
+  /*const generate = document.createElement('div');
   document.body.appendChild(generate);
   renderGeneratePlaylists(generate);
+  document.body.appendChild(document.createElement('br'));
+  document.body.appendChild(document.createElement('br'));*/
 
+  const recipes = document.createElement('div');
+  document.body.appendChild(recipes);
+  renderRecipes(recipes);
   document.body.appendChild(document.createElement('br'));
   document.body.appendChild(document.createElement('br'));
 

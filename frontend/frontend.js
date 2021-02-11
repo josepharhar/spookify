@@ -120,11 +120,42 @@ async function renderRecipes(main) {
   const runButton = document.createElement('button');
   runButton.textContent = 'Run all';
   runButton.onclick = async () => {
-    
+    let recipes;
+    try {
+      recipes = JSON.parse(textarea.value);
+    } catch (error) {
+      console.log('user provided recipes fails JSON.parse:', error);
+      return;
+    }
+    await executeRecipes(recipes.recipes);
   };
 }
 
-async function executeRecipe() {
+async function executeRecipes(recipes) {
+  for (const recipe of recipes) {
+    let songs = [];
+    switch (recipe.operator) {
+      case 'appendPlaylist':
+        if (!recipe.operators || !recipe.operators[0]) {
+          console.log('bad operators for appendPlaylist: ', recipe.operators);
+        }
+        const playlistId = recipe.operators[0];
+        // TODO TODO TODO
+        // download playlist by id and append songs to songs array
+        break;
+
+      case 'filterByLiked':
+        // TODO TODO TODO
+        break;
+
+      default:
+        console.log('unrecognized operator: ' + recipe.operator);
+        break;
+    }
+
+    // TODO TODO TODO
+    // apply songs array to recipe.targetPlaylistId
+  }
 }
 
 async function loadRecipes() {

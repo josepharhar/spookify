@@ -15,7 +15,8 @@ async function updatePlaylists(updateProgress) {
     console.log('getUserPlaylists:', playlistsResponse);
     playlists = playlists.concat(playlistsResponse.body.items);
     offset += playlistsResponse.body.items.length;
-    updateProgress(offset, playlistsResponse.body.total);
+    if (updateProgress)
+      updateProgress(offset, playlistsResponse.body.total);
   } while (playlistsResponse.body.next);
 }
 async function getPlaylists(updateProgress) {
@@ -39,8 +40,9 @@ async function getTracksByPlaylistId(playlistId) {
 
   let tracksResponse;
   let tracks = [];
+  let offset = 0;
   do {
-    let offset = 0;
+    console.log('getPlaylistTracks ' + playlistId + ' offset: ' + offset);
     tracksResponse = await api.getPlaylistTracks(playlistId, {
       limit: 50,
       offset: offset
@@ -177,7 +179,7 @@ async function executeRecipes(recipes) {
   const playlistsById = await getPlaylistsById();
 
   for (const recipe of recipes) {
-    let songs = [];
+    let tracks = [];
     for (const step of recipe.steps) {
       switch (step.operator) {
         case 'appendPlaylist':
@@ -185,7 +187,7 @@ async function executeRecipes(recipes) {
             console.log('bad operands for appendPlaylist: ', recipe.operands);
           }
           const playlistId = step.operands[0];
-          songs = songs.concat(await getTracksByPlaylistId(playlistId));
+          tracks = tracks.concat(await getTracksByPlaylistId(playlistId));
           break;
 
         case 'filterByLiked':
@@ -198,8 +200,19 @@ async function executeRecipes(recipes) {
       }
     }
 
-    // TODO TODO TODO
-    // apply songs array to recipe.targetPlaylistId
+    console.log('recipe done. tracks:', tracks);
+    // apply tracks array to recipe.targetPlaylistId
+    const trackUris = tracks.map(track => track.uri);
+    const tracksPerRequest = 50;
+    for (let i = 0; i < tracks.length; i += tracksPerRequest) {
+      const rangeStart = 0;
+      const insertBefore = 0;
+      const response = await api.reorderTracksInPlaylist(recipe.targetPlaylistId, rangeStart, insertBefore, {
+        uris: trackUris.slice(i, i + tracksPerRequest)
+      });
+      console.log('response:', response);
+      break; // TODO delet this once this works
+    }
   }
 }
 
@@ -207,8 +220,8 @@ async function loadRecipes() {
   try {
     const response = await fetch('/recipes');
     const recipes = await response.json();
-    console.log('loadRecipes /recipes response:\n'
-      + `${response.status} ${response.statusText}\n\n${JSON.stringify(recipes, null, 2)}`);
+    /*console.log('loadRecipes /recipes response:\n'
+      + `${response.status} ${response.statusText}\n\n${JSON.stringify(recipes, null, 2)}`);*/
     return recipes;
   } catch (error) {
     console.log('error loading recipes:', error);

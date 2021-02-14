@@ -1,6 +1,7 @@
 const fs = require('fs');
 
 const express = require('express');
+const bodyParser = require('body-parser');
 const SpotifyWebApi = require('spotify-web-api-node');
 
 const scopes = [
@@ -29,6 +30,8 @@ console.log('secrets: ' + JSON.stringify(secrets, null, 2));
 const spotifyApi = new SpotifyWebApi(secrets);
 
 const server = express();
+
+server.use(bodyParser.json());
 
 server.use('/frontend', express.static('frontend'));
 
@@ -132,7 +135,7 @@ async function streamToString(str) {
 
 server.post('/recipes', async (req, res) => {
   try {
-    await fs.promises.writeFile(recipesFilename, await streamToString(req));
+    await fs.promises.writeFile(recipesFilename, JSON.stringify(req.body, null, 2));
   } catch (err) {
     res.writeHead(400, {'content-type': 'text/plain'});
     res.end(err);

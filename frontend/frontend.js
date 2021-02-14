@@ -4,6 +4,57 @@ const refreshToken = urlParams.get('refresh_token');
 const expiresIn = urlParams.get('expires_in');
 // TODO use refresh stuff
 
+window.playlists = null;
+window.playlistsUpdatedTimestamp = null; // TODO show this somewhere?
+async function updatePlaylists(updateProgress) {
+  window.playlists = [];
+  let offset = 0;
+  let playlistsResponse;
+  do {
+    playlistsResponse = await api.getUserPlaylists(userId, {limit: 50, offset: offset});
+    console.log('getUserPlaylists:', playlistsResponse);
+    playlists = playlists.concat(playlistsResponse.body.items);
+    offset += playlistsResponse.body.items.length;
+    updateProgress(offset, playlistsResponse.body.total);
+  } while (playlistsResponse.body.next);
+}
+async function getPlaylists(updateProgress) {
+  if (!window.playlists) {
+    await updatePlaylists(updateProgress);
+  }
+  return window.playlists;
+}
+async function getPlaylistsById() {
+  const playlists = await getPlaylists();
+  const output = {};
+  for (const playlist of playlists) {
+    output[playlist.id] = playlist;
+  }
+  return output;
+}
+window.tracksByPlaylistId = {};
+async function getTracksByPlaylistId(playlistId) {
+  if (tracksByPlaylistId[playlistId])
+    return tracksByPlaylistId[playlistId];
+
+  let tracksResponse;
+  let tracks = [];
+  do {
+    let offset = 0;
+    tracksResponse = await api.getPlaylistTracks(playlistId, {
+      limit: 50,
+      offset: offset
+    });
+    console.log('tracksResponse:', tracksResponse);
+    // TODO handle tracksResponse.body.items[i].is_local here??
+    tracks = tracks.concat(tracksResponse.body.items.map(track => track.track));
+    offset += tracksResponse.body.items.length;
+  } while (tracksResponse.body.next);
+
+  tracksByPlaylistId[playlistId] = tracks;
+  return tracks;
+}
+
 async function renderPlaylists(main) {
   const loadButton = document.createElement('button');
   loadButton.textContent = 'load playlist id<->name table';
@@ -23,17 +74,7 @@ async function renderPlaylists(main) {
     }
   }
 
-  let playlists = [];
-  let offset = 0;
-  while (true) {
-    const playlistsResponse = await api.getUserPlaylists(userId, {limit: 50, offset: offset});
-    console.log('getUserPlaylists:', playlistsResponse);
-    playlists = playlists.concat(playlistsResponse.body.items);
-    offset += playlistsResponse.body.items.length;
-    updateProgress(offset, playlistsResponse.body.total);
-    if (!playlistsResponse.body.next)
-      break;
-  }
+  const playlists = await getPlaylists(updateProgress);
 
   main.innerHTML = '';
 
@@ -129,28 +170,32 @@ async function renderRecipes(main) {
     }
     await executeRecipes(recipes.recipes);
   };
+  main.appendChild(runButton);
 }
 
 async function executeRecipes(recipes) {
+  const playlistsById = await getPlaylistsById();
+
   for (const recipe of recipes) {
     let songs = [];
-    switch (recipe.operator) {
-      case 'appendPlaylist':
-        if (!recipe.operators || !recipe.operators[0]) {
-          console.log('bad operators for appendPlaylist: ', recipe.operators);
-        }
-        const playlistId = recipe.operators[0];
-        // TODO TODO TODO
-        // download playlist by id and append songs to songs array
-        break;
+    for (const step of recipe.steps) {
+      switch (step.operator) {
+        case 'appendPlaylist':
+          if (!step.operand || !step.operands[0]) {
+            console.log('bad operands for appendPlaylist: ', recipe.operands);
+          }
+          const playlistId = step.operands[0];
+          songs = songs.concat(await getTracksByPlaylistId(playlistId));
+          break;
 
-      case 'filterByLiked':
-        // TODO TODO TODO
-        break;
+        case 'filterByLiked':
+          // TODO TODO TODO
+          break;
 
-      default:
-        console.log('unrecognized operator: ' + recipe.operator);
-        break;
+        default:
+          console.log('unrecognized operator: ' + recipe.operator);
+          break;
+      }
     }
 
     // TODO TODO TODO

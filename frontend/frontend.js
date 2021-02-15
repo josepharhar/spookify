@@ -56,6 +56,24 @@ async function getTracksByPlaylistId(playlistId) {
   tracksByPlaylistId[playlistId] = tracks;
   return tracks;
 }
+window.savedTracks = null;
+async function getSavedTracks() {
+  if (window.savedTracks)
+    return window.savedTracks;
+
+  let tracks = [];
+  let offset = 0;
+  let mySavedTracksResponse;
+  do {
+    console.log('getMySavedTracks offset: ' + offset);
+    mySavedTracksResponse = await api.getMySavedTracks({limit: 50, offset});
+    tracks = tracks.concat(mySavedTracksResponse.body.items);
+    offset += mySavedTracksResponse.body.items.length;
+  } while (mySavedTracksResponse.body.next);
+
+  window.savedTracks = tracks;
+  return window.savedTracks;
+}
 
 async function renderPlaylists(main) {
   const loadButton = document.createElement('button');
@@ -191,7 +209,17 @@ async function executeRecipes(recipes) {
           break;
 
         case 'filterByLiked':
-          // TODO TODO TODO
+          const likedTrackIds = (await getSavedTracks()).map(track => track.track.id);
+          const newTracks = [];
+          for (const track of tracks) {
+            if (likedTrackIds.includes(track.id)) {
+              console.log('filter including track:', track);
+              newTracks.push(track);
+            } else {
+              console.log('filter removing track:', track);
+            }
+          }
+          tracks = newTracks;
           break;
 
         default:

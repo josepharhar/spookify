@@ -6,9 +6,6 @@ import reportWebVitals from './reportWebVitals';
 import Login from './Login';
 import * as Api from './Api';
 
-import SpotifyWebApi from 'spotify-web-api-node';
-import { access } from 'fs';
-
 (async () => {
   // for some reason, the spotify api redirecting uses hash instead of query string...
   let queryString = window.location.search;
@@ -23,7 +20,7 @@ import { access } from 'fs';
   // TODO look in localStorage for an accessToken?
   console.log('accessToken: ' + accessToken);
 
-  if (!accessToken) {
+  if (!accessToken || !await Api.setAccessToken(accessToken)) {
     ReactDOM.render(
       <React.StrictMode>
         <Login />
@@ -32,16 +29,6 @@ import { access } from 'fs';
     );
     return;
   }
-
-  if (tokenType != 'Bearer') {
-    alert('invalid token_type query parameter. Expected "Bearer", got: "' + tokenType + '"');
-    return;
-  }
-
-  /*const spotifyApi = new SpotifyWebApi();
-  spotifyApi.setAccessToken(accessToken);*/
-  console.log('setting accessToken: ' + accessToken);
-  Api.setAccessToken(accessToken);
 
   ReactDOM.render(
     <React.StrictMode>

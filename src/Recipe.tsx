@@ -1,4 +1,4 @@
-interface Recipe {
+export interface Recipe {
   targetPlaylistId: string;
   steps: Array<Step>;
 }
@@ -23,4 +23,10 @@ interface FilterBySavedTracksStep extends Step {
   operands: [];
 }
 
-export default Recipe;
+export function parseRecipe(str: string): Recipe|Error {
+  try {
+    const json = JSON.parse(str);
+  } catch (error) {
+    return new Error('failed to parse recipe: ' + error);
+  }
+}

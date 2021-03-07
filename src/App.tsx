@@ -16,7 +16,7 @@ class App extends React.Component {
     return (
       <SplitWidget>
         <RecipesList />
-        <RecipeEditor />
+        {this.currentEditor ? this.currentEditor : <div>select a recipe TODO make an EmptyWidget like DevTools</div>}
       </SplitWidget>
     );
   }

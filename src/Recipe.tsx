@@ -23,10 +23,24 @@ interface FilterBySavedTracksStep extends Step {
   operands: [];
 }
 
-export function parseRecipe(str: string): Recipe|Error {
+export function parseRecipe(str: string): Recipe|string {
   try {
-    const json = JSON.parse(str);
+    const json: Recipe = JSON.parse(str);
+    // TODO use a library for this
+    if (!json.targetPlaylistId) {
+      //return new Error('no targetPlaylistId');
+      return 'no targetPlaylistId';
+    }
+    if (!json.steps) {
+      return 'no steps;'
+      //return new Error('no steps');
+    }
+    for (const step of json.steps) {
+      // TODO ugh
+    }
+    return json;
   } catch (error) {
-    return new Error('failed to parse recipe: ' + error);
+    return 'failed to parse recipe: ' + error;
+    //return new Error('failed to parse recipe: ' + error);
   }
 }

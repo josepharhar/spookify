@@ -1,4 +1,4 @@
-import Recipe from './Recipe';
+import { Recipe } from './Recipe';
 import * as Api from './Api';
 
 export async function runRecipe(recipe: Recipe) {

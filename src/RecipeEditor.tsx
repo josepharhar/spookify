@@ -1,29 +1,44 @@
 import React from 'react';
-import { Recipe } from './Recipe';
+import { Recipe, parseRecipe } from './Recipe';
 
 interface Props {
   recipe: Recipe;
-}
-
-class TextRecipeEditor extends React.Component<Props> {
-}
-
-class GuiRecipeEditor extends React.Component<Props> {
 }
 
 class RecipeEditor extends React.Component<Props> {
   constructor(props: Props) {
     super(props);
     this.editorType = 'text';
-    this.guiEditor = <GuiRecipeEditor {...props} />;
-    this.textEditor = <TextRecipeEditor {...props} />;
+    this.recipe = null;
+    this.recipeText = '';
+    this.errorText = '';
   }
 
   editorType: 'gui'|'text';
-  guiEditor;
-  textEditor;
+  recipeText: string;
+  recipe: Recipe|null;
 
-  handleSwitchClick(type: 'gui'|'text') {
+  renderGui(): JSX.Element {
+    return <div>TODO implement ggui editor</div>
+  }
+
+  errorText: string;
+  renderText(): JSX.Element {
+    return (
+      <div>
+        <textarea onChange={(event) => this.handleRenderTextChange(event)}></textarea>
+        {this.errorText ? <div className="error">error: {this.errorText}</div> : ''}
+      </div>
+    );
+  }
+  handleRenderTextChange(event: React.ChangeEvent<HTMLTextAreaElement>) {
+    this.recipeText = event.target.value;
+    const parsedRecipe = parseRecipe(this.recipeText);
+    if (typeof parsedRecipe === 'string') {
+      this.setState({errorText: parsedRecipe});
+    } else {
+      this.setState({recipe: parsedRecipe});
+    }
   }
 
   render() {
@@ -34,23 +49,27 @@ class RecipeEditor extends React.Component<Props> {
             Save
           </button>
           <button
-            onClick={() => this.handleSwitchClick('gui')}
+            onClick={() => this.setState({editorType: 'gui'})}
             disabled={this.editorType !== 'gui'}>
             GUI
           </button>
           <button
-            onClick={() => this.handleSwitchClick('text')}
+            onClick={() => this.setState({editorType: 'text'})}
             disabled={this.editorType !== 'text'}>
             Text
           </button>
         </div>
-        {this.editor}
+        {this.editorType === 'text' ? this.renderText() : this.renderGui()}
       </div>
     );
   }
 
   getRecipe(): Recipe|null {
-    return null;
+    return this.recipe;
+  }
+  setRecipe(recipe: Recipe) {
+    this.recipe = recipe;
+    this.recipeText = JSON.stringify(recipe, null, 2);
   }
 }
 

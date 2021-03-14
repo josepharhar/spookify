@@ -1,6 +1,7 @@
 export interface Recipe {
   targetPlaylistId: string;
   steps: Array<Step>;
+  name: string;
 }
 
 interface Step {
@@ -24,9 +25,9 @@ interface FilterBySavedTracksStep extends Step {
 }
 
 export function parseRecipe(str: string): Recipe|string {
+  // TODO use a library for this
   try {
     const json: Recipe = JSON.parse(str);
-    // TODO use a library for this
     if (!json.targetPlaylistId) {
       //return new Error('no targetPlaylistId');
       return 'no targetPlaylistId';
@@ -37,6 +38,9 @@ export function parseRecipe(str: string): Recipe|string {
     }
     for (const step of json.steps) {
       // TODO ugh
+    }
+    if (!json.name) {
+      return 'no name';
     }
     return json;
   } catch (error) {

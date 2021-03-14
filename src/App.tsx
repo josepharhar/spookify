@@ -1,48 +1,80 @@
 import React from 'react';
 import './App.css';
-import * as Api from './Api';
 import SplitWidget from './SplitWidget';
 import RecipeEditor from './RecipeEditor';
 import { Recipe } from './Recipe';
+import EmptyWidget from './EmptyWidget';
 
 class App extends React.Component {
   constructor(props: {}) {
     super(props);
     this.currentEditor = null;
-  }
-
-  currentEditor: RecipeEditor|null = null;
-
-  render() {
-    return (
-      <SplitWidget>
-        <RecipesList />
-        {this.currentEditor ? this.currentEditor : <div>select a recipe TODO make an EmptyWidget like DevTools</div>}
-      </SplitWidget>
-    );
-  }
-}
-
-class RecipesList extends React.Component {
-  constructor(props: {}) {
-    super(props);
     this.recipes = [];
   }
 
+  currentEditor: JSX.Element|null = null;
   recipes: Array<Recipe>;
 
   newRecipe() {
-    const recipeName = prompt('Recipe name:', 'my-new-recipe');
+    this.setState({
+      recipes: this.recipes.push({
+        name: 'my-new-recipe',
+        targetPlaylistId: 'playlistId',
+        steps: []
+      })
+    });
+  }
+
+  handleRecipeChanged(recipe: Recipe) {
+    alert('TODO handlerecipechanged');
+  }
+
+  handleEditRecipe(recipe: Recipe) {
+    /*this.setState({
+      currentEditor: <RecipeEditor
+        initialRecipe={recipe}
+        onRecipeChanged={this.handleRecipeChanged.bind(this)} />
+    })*/
+    const newEditor = <RecipeEditor
+        initialRecipe={recipe}
+        onRecipeChanged={this.handleRecipeChanged.bind(this)} />
+    console.log('newEditor:', newEditor);
+    this.setState({
+      currentEditor: newEditor
+    });
+    this.currentEditor = newEditor;
+  }
+
+  handleRunRecipe(recipe: Recipe) {
+    alert('TODO implement handleRunRecipe');
   }
 
   render() {
+    console.log('render this.currentEditor', this.currentEditor);
+    return (
+      <SplitWidget>
+        {this.renderRecipesList()}
+        {this.currentEditor
+          ? this.currentEditor
+          : <EmptyWidget message="Select a recipe from the sidebar" />}
+      </SplitWidget>
+    );
+  }
+
+  renderRecipesList() {
     return (
       <div>
         <div>TODO run all recipes button</div>
         <button onClick={() => this.newRecipe()}>New recipe</button>
         <ul>
-          {[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20].map(index => {
-            return <li className="clickable" tabIndex={0}>recipe {index}</li>;
+          {this.recipes.map(recipe => {
+            return (
+              <li>
+                {recipe.name}
+                <button onClick={this.handleEditRecipe.bind(this, recipe)}>Edit</button>
+                <button onClick={this.handleRunRecipe.bind(this, recipe)}>Run</button>
+              </li>
+            );
           })}
         </ul>
       </div>

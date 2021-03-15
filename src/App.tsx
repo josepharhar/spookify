@@ -10,9 +10,11 @@ class App extends React.Component {
     super(props);
     this.currentEditor = null;
     this.recipes = [];
+    this.currentRecipeIndex = -1;
   }
 
   currentEditor: JSX.Element|null = null;
+  currentRecipeIndex: number;
   recipes: Array<Recipe>;
 
   newRecipe() {
@@ -25,24 +27,25 @@ class App extends React.Component {
     });
   }
 
-  handleRecipeChanged(recipe: Recipe) {
-    alert('TODO handlerecipechanged');
+  handleRecipeChanged(newRecipe: Recipe) {
+    this.recipes[this.currentRecipeIndex] = newRecipe;
+    this.setState({
+      recipes: this.recipes
+    });
   }
 
-  handleEditRecipe(recipe: Recipe) {
-    /*this.setState({
-      currentEditor: <RecipeEditor
-        initialRecipe={recipe}
-        onRecipeChanged={this.handleRecipeChanged.bind(this)} />
-    })*/
+  handleEditRecipe(recipe: Recipe, index: number) {
     const newEditor = <RecipeEditor
         initialRecipe={recipe}
         onRecipeChanged={this.handleRecipeChanged.bind(this)} />
     console.log('newEditor:', newEditor);
-    this.setState({
-      currentEditor: newEditor
-    });
     this.currentEditor = newEditor;
+    this.currentRecipeIndex = index;
+    // TODO why doesn't setState here actually change this.currentEditor??
+    this.setState({
+      currentEditor: newEditor,
+      currentRecipeIndex: index
+    });
   }
 
   handleRunRecipe(recipe: Recipe) {
@@ -67,11 +70,11 @@ class App extends React.Component {
         <div>TODO run all recipes button</div>
         <button onClick={() => this.newRecipe()}>New recipe</button>
         <ul>
-          {this.recipes.map(recipe => {
+          {this.recipes.map((recipe, index) => {
             return (
               <li>
                 {recipe.name}
-                <button onClick={this.handleEditRecipe.bind(this, recipe)}>Edit</button>
+                <button onClick={this.handleEditRecipe.bind(this, recipe, index)}>Edit</button>
                 <button onClick={this.handleRunRecipe.bind(this, recipe)}>Run</button>
               </li>
             );

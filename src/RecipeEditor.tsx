@@ -13,7 +13,7 @@ class RecipeEditor extends React.Component<Props> {
     this.recipe = props.initialRecipe;
 
     //this.recipeText = '';
-    this.errorText = '';
+    this.errorText = null;
   }
 
   editorType: 'gui'|'text';
@@ -25,12 +25,13 @@ class RecipeEditor extends React.Component<Props> {
 
   // TODO figure out how to put this in a separate component
   //recipeText: string;
-  errorText: string;
+  errorText: string|null;
   renderText(): JSX.Element {
+    console.log('this.errortext: ',this.errorText);
     return (
       <div>
         <textarea
-          value={JSON.stringify(this.recipe, null, 2)}
+          defaultValue={JSON.stringify(this.recipe, null, 2)}
           onChange={(event) => this.handleRenderTextChange(event)}
           cols={60}
           rows={30} />
@@ -41,9 +42,14 @@ class RecipeEditor extends React.Component<Props> {
   handleRenderTextChange(event: React.ChangeEvent<HTMLTextAreaElement>) {
     //this.recipeText = event.target.value;
     const parsedRecipe = parseRecipe(event.target.value);
+    console.log('parsedRecipe:', parsedRecipe);
     if (typeof parsedRecipe === 'string') {
+      // TODO why tf isn't setState working anymore
+      this.errorText = parsedRecipe;
       this.setState({errorText: parsedRecipe});
     } else {
+      this.errorText = null;
+      this.setState({errorText: null});
       this.setRecipe(parsedRecipe);
     }
   }
@@ -69,6 +75,7 @@ class RecipeEditor extends React.Component<Props> {
   }
 
   setRecipe(recipe: Recipe) {
+    this.recipe = recipe;
     this.setState({
       recipe: recipe,
     })

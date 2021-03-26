@@ -4,6 +4,7 @@ import SplitWidget from './SplitWidget';
 import RecipeEditor from './RecipeEditor';
 import { Recipe } from './Recipe';
 import EmptyWidget from './EmptyWidget';
+import ConsoleOutput from './ConsoleOutput';
 
 class App extends React.Component {
   constructor(props: {}) {
@@ -11,11 +12,13 @@ class App extends React.Component {
     this.currentEditor = null;
     this.recipes = [];
     this.currentRecipeIndex = -1;
+    this.consoleLines = ['helllo world'];
   }
 
   currentEditor: JSX.Element|null = null;
   currentRecipeIndex: number;
   recipes: Array<Recipe>;
+  consoleLines: Array<string>;
 
   newRecipe() {
     this.setState({
@@ -55,12 +58,15 @@ class App extends React.Component {
   render() {
     console.log('render this.currentEditor', this.currentEditor);
     return (
-      <SplitWidget>
-        {this.renderRecipesList()}
-        {this.currentEditor
-          ? this.currentEditor
-          : <EmptyWidget message="Select a recipe from the sidebar" />}
-      </SplitWidget>
+      <div>
+        <SplitWidget>
+          {this.renderRecipesList()}
+          {this.currentEditor
+            ? this.currentEditor
+            : <EmptyWidget message="Select a recipe from the sidebar" />}
+        </SplitWidget>
+        <ConsoleOutput lines={this.consoleLines} />
+      </div>
     );
   }
 

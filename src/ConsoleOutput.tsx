@@ -1,5 +1,6 @@
 import React from 'react';
 import { Recipe, parseRecipe } from './Recipe';
+import './ConsoleOutput.css';
 
 interface Props {
   /*initialRecipe: Recipe;
@@ -15,9 +16,17 @@ export default class ConsoleOutput extends React.Component<Props> {
   render() {
     return (
       <div className="console-output">
-        {this.props.lines.map(line => {
-          return <div className="line">{line}</div>
-        })}
+        <div>Console Output</div>
+        <div className="console-list">
+          {this.props.lines.map((lineContent, lineNumber)=> {
+            return (
+              <div className="line">
+                <span className="line-number">{lineNumber}</span>
+                <span className="line-content">{lineContent}</span>
+              </div>
+            );
+          })}
+        </div>
       </div>
     );
   }

@@ -1,5 +1,9 @@
 import React from 'react';
 import { Recipe, parseRecipe } from './Recipe';
+import SelectSearch, { SelectedOptionValue } from 'react-select-search';
+import * as api from './Api';
+import { formatWithOptions } from 'node:util';
+import ConsoleOutput from './ConsoleOutput';
 
 interface Props {
   initialRecipe: Recipe;
@@ -9,18 +13,59 @@ interface Props {
 class RecipeEditor extends React.Component<Props> {
   constructor(props: Props) {
     super(props);
-    this.editorType = 'text';
+    this.editorType = 'gui';
     this.recipe = props.initialRecipe;
 
     //this.recipeText = '';
     this.errorText = null;
+
+    this.playlistsAlphabetical = null;
+    (async () => {
+      this.playlistsAlphabetical = await api.getPlaylists();
+      this.setState({
+        playlistsAlphabetical: this.playlistsAlphabetical
+      });
+    })();
   }
 
+  playlistsAlphabetical: Array<SpotifyApi.PlaylistObjectSimplified>|null;
   editorType: 'gui'|'text';
   recipe: Recipe|null;
 
   renderGui(): JSX.Element {
-    return <div>TODO implement gui editor</div>
+    return (
+      <div>
+        <div>
+          <span>Target output playlist:</span>
+          {this.playlistsAlphabetical
+            ? <SelectSearch
+                options={this.getSelectOptions(this.playlistsAlphabetical)}
+                placeholder={"Choose a playlist"}
+                search
+                onChange={value => this.handleTargetPlaylistChanged(value)}
+                />
+            : <span>Loading playlists...</span>}
+        </div>
+      </div>
+    );
+  }
+  handleTargetPlaylistChanged(value: SelectedOptionValue|SelectedOptionValue[]) {
+    if (Array.isArray(value)) {
+      console.log('selected option is an array?', value);
+      return;
+    }
+    console.log('selected value:', value);
+    console.log('selected value id: ' + value.value);
+  }
+  getSelectOptions(playlists: api.PlaylistList) {
+    const options = [];
+    for (const playlist of playlists) {
+      options.push({
+        name: playlist.name,
+        value: playlist.id
+      });
+    }
+    return options;
   }
 
   // TODO figure out how to put this in a separate component
@@ -54,17 +99,24 @@ class RecipeEditor extends React.Component<Props> {
     }
   }
 
+  setEditorType(type: 'gui'|'text') {
+    this.editorType = type;
+    this.setState({
+      editorType: this.editorType
+    });
+  }
+
   render() {
     return (
       <div>
         <div>
           <button
-            onClick={() => this.setState({editorType: 'gui'})}
+            onClick={this.setEditorType.bind(this, 'gui')}
             disabled={this.editorType === 'gui'}>
             GUI
           </button>
           <button
-            onClick={() => this.setState({editorType: 'text'})}
+            onClick={this.setEditorType.bind(this, 'text')}
             disabled={this.editorType === 'text'}>
             Text
           </button>

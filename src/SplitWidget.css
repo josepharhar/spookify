@@ -1,19 +1,24 @@
 .split-widget {
+  display: flex;
 }
 
 /* left sidebar */
 .split-widget>:nth-child(1) {
-  height: 100%;
+  /*flex: 1;*/
+  margin-right: 15px;
+
+  /*height: 100%;
   width: 160px;
   position: fixed;
   z-index: 1;
   top: 0;
   left: 0;
-  overflow-x: hidden; /* disable horizontal scroll */
+  overflow-x: hidden;*/ /* disable horizontal scroll */
 }
 
 /* right sidebar */
 .split-widget>:nth-child(2) {
-  margin-left: 160px;
-  padding: 0px 10px;
+  flex: 3;
+  /*margin-left: 160px;
+  padding: 0px 10px;*/
 }

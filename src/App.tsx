@@ -12,7 +12,7 @@ class App extends React.Component {
     this.currentEditor = null;
     this.recipes = [];
     this.currentRecipeIndex = -1;
-    this.consoleLines = ['helllo world'];
+    this.consoleLines = [];
   }
 
   currentEditor: JSX.Element|null = null;
@@ -55,6 +55,14 @@ class App extends React.Component {
     alert('TODO implement handleRunRecipe');
   }
 
+  handleDeleteRecipe(index: number) {
+    if (window.confirm('Are you sure you want to delete "' + this.recipes[index].name + '"?')) {
+      this.setState({
+        recipes: this.recipes.splice(index, 1)
+      });
+    }
+  }
+
   render() {
     console.log('render this.currentEditor', this.currentEditor);
     return (
@@ -63,7 +71,7 @@ class App extends React.Component {
           {this.renderRecipesList()}
           {this.currentEditor
             ? this.currentEditor
-            : <EmptyWidget message="Select a recipe from the sidebar" />}
+            : /*<EmptyWidget message="Select a recipe from the sidebar" />*/''}
         </SplitWidget>
         <ConsoleOutput lines={this.consoleLines} />
       </div>
@@ -80,8 +88,11 @@ class App extends React.Component {
             return (
               <li>
                 {recipe.name}
-                <button onClick={this.handleEditRecipe.bind(this, recipe, index)}>Edit</button>
-                <button onClick={this.handleRunRecipe.bind(this, recipe)}>Run</button>
+                <div>
+                  <button onClick={this.handleEditRecipe.bind(this, recipe, index)}>Edit</button>
+                  <button onClick={this.handleRunRecipe.bind(this, recipe)}>Run</button>
+                  <button onClick={this.handleDeleteRecipe.bind(this, index)}>Delete</button>
+                </div>
               </li>
             );
           })}

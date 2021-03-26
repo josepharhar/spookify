@@ -1,0 +1,34 @@
+.console-output {
+  margin-top: 15px;
+  margin-left: 15px;
+}
+
+.console-list {
+  font-family: monospace;
+  margin-top: 10px;
+  height: 100px;
+  width: 400px;
+  overflow-y: scroll;
+  resize: both;
+  background-color: lightgray;
+}
+
+.line {
+  display: grid;
+  /*grid-template-columns: auto auto;*/
+
+  /*grid-auto-columns: min-content;
+  grid-auto-flow: column;*/
+
+  grid-template-columns: min-content auto;
+}
+
+.line-number {
+  white-space: pre;
+  background-color: rgb(185, 185, 185);
+  padding-right: 3px;
+}
+
+.line-content {
+  padding-left: 7px;
+}

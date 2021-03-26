@@ -20,33 +20,39 @@ export function getAccessToken(): string {
   return accessToken;
 }
 
-type PlaylistMap = Map<string, SpotifyApi.PlaylistObjectSimplified>;
-let idToPlaylist: PlaylistMap|null = null;
-async function fetchPlaylistMap(): Promise<PlaylistMap> {
-  const output = new Map();
+export type PlaylistMap = Map<string, SpotifyApi.PlaylistObjectSimplified>;
+export type PlaylistList = Array<SpotifyApi.PlaylistObjectSimplified>;
+async function fetchPlaylists(): Promise<PlaylistList> {
+  // TODO figure out how to use console output here
+  const output = [];
   let playlistsResponse;
   let offset = 0;
   do {
     // TODO add floating centered modal loading widget here?
     playlistsResponse = await api.getUserPlaylists(userId, {limit: 50, offset});
     for (const playlist of playlistsResponse.body.items) {
-      output.set(playlist.id, playlist);
+      output.push(playlist);
     }
     offset += playlistsResponse.body.items.length;
   } while (playlistsResponse.body.next);
   return output;
 }
-export async function getPlaylistById(playlistId: string): Promise<SpotifyApi.PlaylistObjectSimplified> {
+let playlists: PlaylistList|null = null;
+export async function getPlaylists(): Promise<PlaylistList> {
+  if (!playlists)
+    playlists = await fetchPlaylists();
+  return playlists;
+}
+let idToPlaylist: PlaylistMap|null = null;
+export async function getPlaylistsById(): Promise<PlaylistMap> {
   if (!idToPlaylist) {
-    idToPlaylist = await fetchPlaylistMap();
+    const playlists = await getPlaylists();
+    idToPlaylist = new Map();
+    for (const playlist of playlists) {
+      idToPlaylist.set(playlist.id, playlist);
+    }
   }
-
-  const playlist = idToPlaylist.get(playlistId);
-  if (!playlist) {
-    // I guess... this shouldn't happen...?
-    throw new Error('failed to find playlist with id: ' + playlistId);
-  }
-  return playlist;
+  return idToPlaylist;
 }
 
 const playlistIdToTracks = new Map();

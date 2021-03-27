@@ -73,9 +73,9 @@ class App extends React.Component {
             ? this.currentEditor
             : /*<EmptyWidget message="Select a recipe from the sidebar" />*/''}
         </SplitWidget>
-        <ConsoleOutput lines={this.consoleLines} />
       </div>
     );
+    // TODO use this <ConsoleOutput lines={this.consoleLines} />
   }
 
   renderRecipesList() {

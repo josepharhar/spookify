@@ -36,14 +36,18 @@ class RecipeEditor extends React.Component<Props> {
     return (
       <div>
         <div>
-          <span>Target output playlist:</span>
           {this.playlistsAlphabetical
-            ? <SelectSearch
-                options={this.getSelectOptions(this.playlistsAlphabetical)}
-                placeholder={"Choose a playlist"}
-                search
-                onChange={value => this.handleTargetPlaylistChanged(value)}
-                />
+            ? <div className="border">
+                <span>Target output playlist:</span>
+                <SelectSearch
+                  options={this.getSelectOptions(this.playlistsAlphabetical)}
+                  placeholder={"Choose a playlist"}
+                  search
+                  onChange={value => this.handleTargetPlaylistChanged(value)}
+                  />
+                <span>Playlist ID: </span>
+                <input disabled value={this.recipe ? this.recipe.targetPlaylistId : ''}></input>
+              </div>
             : <span>Loading playlists...</span>}
         </div>
       </div>

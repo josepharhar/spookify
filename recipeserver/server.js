@@ -1,15 +1,29 @@
 const fs = require('fs');
 
 const express = require('express');
+const bodyParser = require('body-parser');
+const cors = require('cors');
 
 const recipesFilename = 'recipes.json';
 const server = express();
 
+server.use(cors());
 server.use(bodyParser.json());
 
-server.use('/', (req, res) => {
+server.use((req, res, next) => {
+  console.log(`${req.method} ${req.url}`);
+  next();
+});
+
+server.get('/', async (req, res) => {
   res.writeHead(200, {'content-type': 'text/plain'});
-  res.end(`hello world\n\nrecipe: TODO`);
+  let file = '';
+  try {
+    file = await fs.promises.readFile(recipesFilename);
+  } catch (error) {
+    file = error;
+  }
+  res.end(`recipe:\n\n${file}`);
 });
 
 server.get('/recipes', async (req, res) => {
@@ -52,6 +66,9 @@ server.post('/recipes', async (req, res) => {
     res.end(err);
     return;
   }
-  res.writeHead(200, {'content-type': 'application/json'});
-  res.end();
+  res.writeHead(200, {'content-type': 'text/plain'});
+  res.end(`successfully wrote to ${recipesFilename}`);
 });
+
+const port = process.env.PORT || 48880;
+server.listen(port, () => console.log('http server listening on port ' + port));

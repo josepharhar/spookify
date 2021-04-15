@@ -5,19 +5,23 @@ export interface Recipe {
   steps: Array<Step>;
   name: string;
 }
-interface Step {
-  operator: 'appendPlaylistById'|'filterByPlaylistId'|'filterBySavedTracks';
+export type StepOperator = 'appendPlaylistById'|'filterByPlaylistId'|'filterBySavedTracks';
+export interface Step {
+  operator: StepOperator;
   operands: Array<string>;
 }
-interface AppendPlaylistStep extends Step {
+export function getStepOperators(): Array<StepOperator> {
+  return ['appendPlaylistById','filterByPlaylistId','filterBySavedTracks'];
+}
+export interface AppendPlaylistStep extends Step {
   operator: 'appendPlaylistById';
   operands: [playlistId: string];
 }
-interface FilterByPlaylistStep extends Step {
+export interface FilterByPlaylistStep extends Step {
   operator: 'filterByPlaylistId';
   operands: [playlistId: string];
 }
-interface FilterBySavedTracksStep extends Step {
+export interface FilterBySavedTracksStep extends Step {
   operator: 'filterBySavedTracks';
   operands: [];
 }

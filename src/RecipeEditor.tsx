@@ -1,5 +1,5 @@
 import React from 'react';
-import { Recipe, parseRecipe } from './Recipe';
+import { Recipe, parseRecipe, getStepOperators, StepOperator, Step } from './Recipe';
 import SelectSearch, { SelectedOptionValue } from 'react-select-search';
 import * as api from './Api';
 import { formatWithOptions } from 'node:util';
@@ -30,40 +30,109 @@ class RecipeEditor extends React.Component<Props> {
 
   playlistsAlphabetical: Array<SpotifyApi.PlaylistObjectSimplified>|null;
   editorType: 'gui'|'text';
-  recipe: Recipe|null;
+  recipe: Recipe/*|null*/;
 
   renderGui(): JSX.Element {
     return (
       <div>
         <div>
           {this.playlistsAlphabetical
-            ? <div className="border">
-                <span>Target output playlist:</span>
-                <SelectSearch
-                  options={this.getSelectOptions(this.playlistsAlphabetical)}
-                  placeholder={"Choose a playlist"}
-                  search
-                  onChange={value => this.handleTargetPlaylistChanged(value)}
-                  />
-                <span>Playlist ID: </span>
-                <input disabled value={this.recipe ? this.recipe.targetPlaylistId : ''}></input>
+            ? <div>
+                <div className="border">
+                  <span>Target output playlist:</span>
+                  <SelectSearch
+                    options={this.getPlaylistsAsSelectOptions()}
+                    placeholder={"Choose a playlist"}
+                    search
+                    onChange={value => this.handleTargetPlaylistChanged(value)}
+                    />
+                  <span>Target output playlist ID: </span>
+                  <input disabled value={this.recipe ? this.recipe.targetPlaylistId : ''}></input>
+                </div>
+                {this.recipe.steps.map((step, index) => {
+                  return <div className="border">
+                    <span>Step type:</span>
+                    <SelectSearch
+                      options={getStepOperators().map(operator => {
+                        return {name: operator, value: operator};
+                      })}
+                      onChange={value => this.handleStepTypeModified(index, value)}
+                      />
+                    {this.renderGuiStepOperators(step, index)}
+                  </div>
+                })}
+                <div className="border">
+                  <button onClick={() => this.handleAddNewStep()}>Add a new step</button>
+                </div>
               </div>
             : <span>Loading playlists...</span>}
         </div>
       </div>
     );
   }
-  handleTargetPlaylistChanged(value: SelectedOptionValue|SelectedOptionValue[]) {
+  renderGuiStepOperators(step: Step, index: number): JSX.Element|null {
+    switch (step.operator) {
+      case 'appendPlaylistById':
+      case 'filterByPlaylistId':
+        return <div>
+            <span>Playlist to append:</span>
+            <SelectSearch
+              options={this.getPlaylistsAsSelectOptions()}
+              placeholder={"Choose a playlist"}
+              search
+              onChange={value => this.handleAppendStepModified(index, value)}
+              />
+          </div>;
+
+
+      case 'filterBySavedTracks':
+        return null;
+
+      default:
+        return <span>{'unknown: ' + step.operator}</span>;
+    }
+  }
+  handleTargetPlaylistChanged(value: any) {
     if (Array.isArray(value)) {
-      console.log('selected option is an array?', value);
+      console.error('selected option is an array?', value);
       return;
     }
-    console.log('selected value:', value);
-    console.log('selected value id: ' + value.value);
+    if (typeof value !== 'string') {
+      console.error('selected option is not a string:', value);
+      return;
+    }
+
+    this.recipe.targetPlaylistId = value;
+    this.recipeChanged();
   }
-  getSelectOptions(playlists: api.PlaylistList) {
+  handleStepTypeModified(stepIndex: number, value: any) {
+    if (typeof value !== 'string') {
+      console.error('selected option is not a sring:', value);
+      return;
+    }
+    this.recipe.steps[stepIndex].operator = (value as StepOperator);
+    this.recipeChanged();
+  }
+  handleAddNewStep() {
+    this.recipe.steps.push({operator: 'appendPlaylistById', operands: ['playlistId']});
+    this.recipeChanged();
+    console.log('added step', this);
+  }
+  handleAppendStepModified(stepIndex: number, value: any) {
+    if (typeof value !== 'string') {
+      console.error('handleAppendStepModified value isnt a string:', value);
+      return;
+    }
+    this.recipe.steps[stepIndex].operands[0] = value;
+    this.recipeChanged();
+  }
+  getPlaylistsAsSelectOptions() {
+    if (!this.playlistsAlphabetical) {
+      console.error('getSelectOptions this.playlistsAlphabetical hasnt loaded yet!', this);
+      return [];
+    }
     const options = [];
-    for (const playlist of playlists) {
+    for (const playlist of this.playlistsAlphabetical) {
       options.push({
         name: playlist.name,
         value: playlist.id
@@ -71,6 +140,8 @@ class RecipeEditor extends React.Component<Props> {
     }
     return options;
   }
+
+
 
   // TODO figure out how to put this in a separate component
   //recipeText: string;
@@ -99,7 +170,8 @@ class RecipeEditor extends React.Component<Props> {
     } else {
       this.errorText = null;
       this.setState({errorText: null});
-      this.setRecipe(parsedRecipe);
+      this.recipe = parsedRecipe;
+      this.recipeChanged();
     }
   }
 
@@ -130,12 +202,11 @@ class RecipeEditor extends React.Component<Props> {
     );
   }
 
-  setRecipe(recipe: Recipe) {
-    this.recipe = recipe;
+  recipeChanged() {
     this.setState({
-      recipe: recipe,
+      recipe: this.recipe,
     })
-    this.props.onRecipeChanged(recipe);
+    this.props.onRecipeChanged(this.recipe);
     //this.recipeText = JSON.stringify(recipe, null, 2);
   }
 }

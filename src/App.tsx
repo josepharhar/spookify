@@ -5,6 +5,8 @@ import RecipeEditor from './RecipeEditor';
 import { Recipe } from './Recipe';
 import EmptyWidget from './EmptyWidget';
 import ConsoleOutput from './ConsoleOutput';
+import { runRecipe } from './RecipeRunner';
+import { pushToPlaylist } from './Api';
 
 class App extends React.Component {
   constructor(props: {}) {
@@ -13,9 +15,7 @@ class App extends React.Component {
     this.recipes = [];
     this.currentRecipeIndex = -1;
     this.consoleLines = [];
-    this.recipesServer = '';
-    /*this.recipesServerFetch = null;
-    this.pendingServerFetch = false;*/
+    this.recipesServer = localStorage.getItem('recipesServer') || '';
     this.recipesDirty = false;
   }
 
@@ -24,8 +24,6 @@ class App extends React.Component {
   recipes: Array<Recipe>;
   consoleLines: Array<string>;
   recipesServer: string;
-  /*recipesServerFetch: Promise<Response>|null;
-  pendingServerFetch: boolean;*/
   recipesDirty: boolean;
 
   newRecipe() {
@@ -43,7 +41,6 @@ class App extends React.Component {
     this.setState({
       recipes: this.recipes
     });
-    //this.pushToRecipesServer();
     this.recipesDirty = true;
   }
 
@@ -61,8 +58,11 @@ class App extends React.Component {
     });
   }
 
-  handleRunRecipe(recipe: Recipe) {
-    alert('TODO implement handleRunRecipe');
+  async handleRunRecipe(recipe: Recipe) {
+    console.log('running recipe...', recipe);
+    const tracks = await runRecipe(recipe);
+    console.log('finished running recipe', recipe);
+    await pushToPlaylist(recipe.targetPlaylistId, tracks);
   }
 
   handleDeleteRecipe(index: number) {
@@ -109,11 +109,9 @@ class App extends React.Component {
   }
 
   recipesServerChanged(newServer: string) {
+    localStorage.setItem('recipesServer', newServer);
     this.recipesServer = newServer;
     this.setState({recipesServer: this.recipesServer});
-    // this would be run every time the user types a character...
-    // maybe run it on blur from the input element?
-    //this.pushToRecipesServer();
   }
 
   async loadFromRecipesServer() {
@@ -128,6 +126,9 @@ class App extends React.Component {
 
     const json = await response.json();
     this.recipes = json;
+    this.setState({
+      recipes: this.recipes
+    });
     console.log('loaded new recipes:', json, response);
   }
 
@@ -135,12 +136,10 @@ class App extends React.Component {
     if (!this.recipesServer)
       return;
 
-    /*if (this.recipesServerFetch) {
-      this.pendingServerFetch = true;
-      return;
-    }*/
-
     this.recipesDirty = false;
+    this.setState({
+      recipesDirty: this.recipesDirty
+    });
 
     const response = await fetch(this.recipesServer, {
       method: 'POST',
@@ -151,15 +150,8 @@ class App extends React.Component {
       body: JSON.stringify(this.recipes, null, 2)
     });
 
-    //const response = await this.recipesServerFetch;
-    //this.recipesServerFetch = null;
     if (!response.ok)
       console.error('recipe server fetch failed:', response);
-
-    /*if (this.pendingServerFetch) {
-      this.pendingServerFetch = false;
-      this.pushToRecipesServer();
-    }*/
   }
 
   renderRecipesList() {

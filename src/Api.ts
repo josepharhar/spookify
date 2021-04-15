@@ -63,6 +63,7 @@ async function fetchTracks(playlistId: string): Promise<Array<SpotifyApi.Playlis
   do {
     tracksResponse = await api.getPlaylistTracks(playlistId, {limit: 50, offset});
     tracks = tracks.concat(tracksResponse.body.items);
+    offset += tracksResponse.body.items.length;
   } while (tracksResponse.body.next);
   return tracks;
 }
@@ -96,4 +97,19 @@ export function invalidatePlaylistById(playlistId: string) {
   if (idToPlaylist)
     idToPlaylist.delete(playlistId);
   playlistIdToTracks.delete(playlistId);
+}
+
+export async function pushToPlaylist(targetPlaylistId: string, tracks: Array<SpotifyApi.TrackObjectFull>) {
+  const trackUris = tracks.map(track => track.uri);
+  const tracksPerRequest = 50;
+  for (let i = 0; i < tracks.length; i += tracksPerRequest) {
+    const response = await api.reorderTracksInPlaylist(
+      targetPlaylistId,
+      /*rangeStart=*/0,
+      /*insertBefore=*/i, // TODO idk if this is correct
+      {
+        /* @ts-ignore */
+        uris: trackUris.slice(i, i + tracksPerRequest)
+      });
+  }
 }

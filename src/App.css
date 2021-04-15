@@ -10,6 +10,7 @@
   border-width: 2px;
   border-style: outset;
   border-color: darkgray;
-  margin: 2px;
-  padding: 2px;
+  margin: 4px;
+  margin-bottom: 8px;
+  padding: 4px;
 }

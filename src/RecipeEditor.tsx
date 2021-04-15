@@ -30,7 +30,7 @@ class RecipeEditor extends React.Component<Props> {
 
   playlistsAlphabetical: Array<SpotifyApi.PlaylistObjectSimplified>|null;
   editorType: 'gui'|'text';
-  recipe: Recipe/*|null*/;
+  recipe: Recipe;
 
   renderGui(): JSX.Element {
     return (
@@ -39,20 +39,29 @@ class RecipeEditor extends React.Component<Props> {
           {this.playlistsAlphabetical
             ? <div>
                 <div className="border">
+                  <span>Name: </span>
+                  <input
+                    value={this.recipe.name}
+                    onChange={event => this.handleNameChanged(event.target.value)}
+                    />
+                </div>
+                <div className="border">
                   <span>Target output playlist:</span>
                   <SelectSearch
+                    value={this.recipe.targetPlaylistId /* TODO convert to name here */}
                     options={this.getPlaylistsAsSelectOptions()}
                     placeholder={"Choose a playlist"}
                     search
                     onChange={value => this.handleTargetPlaylistChanged(value)}
                     />
-                  <span>Target output playlist ID: </span>
+                  <span>id: </span>
                   <input disabled value={this.recipe ? this.recipe.targetPlaylistId : ''}></input>
                 </div>
                 {this.recipe.steps.map((step, index) => {
                   return <div className="border">
                     <span>Step type:</span>
                     <SelectSearch
+                      value={step.operator}
                       options={getStepOperators().map(operator => {
                         return {name: operator, value: operator};
                       })}
@@ -77,6 +86,7 @@ class RecipeEditor extends React.Component<Props> {
         return <div>
             <span>Playlist to append:</span>
             <SelectSearch
+              value={step.operands[0]}
               options={this.getPlaylistsAsSelectOptions()}
               placeholder={"Choose a playlist"}
               search
@@ -91,6 +101,10 @@ class RecipeEditor extends React.Component<Props> {
       default:
         return <span>{'unknown: ' + step.operator}</span>;
     }
+  }
+  handleNameChanged(newName: string) {
+    this.recipe.name = newName;
+    this.recipeChanged();
   }
   handleTargetPlaylistChanged(value: any) {
     if (Array.isArray(value)) {
@@ -111,6 +125,7 @@ class RecipeEditor extends React.Component<Props> {
       return;
     }
     this.recipe.steps[stepIndex].operator = (value as StepOperator);
+    this.recipe.steps[stepIndex].operands = [];
     this.recipeChanged();
   }
   handleAddNewStep() {

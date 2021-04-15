@@ -1,7 +1,7 @@
 import { Recipe } from './Recipe';
 import * as Api from './Api';
 
-export async function runRecipe(recipe: Recipe) {
+export async function runRecipe(recipe: Recipe): Promise<Array<SpotifyApi.TrackObjectFull>> {
   let tracks: Array<SpotifyApi.TrackObjectFull> = [];
   for (const step of recipe.steps) {
     switch (step.operator) {
@@ -31,4 +31,5 @@ export async function runRecipe(recipe: Recipe) {
         throw new Error('unrecognized operator: ' + step.operator);
     }
   }
+  return tracks;
 }

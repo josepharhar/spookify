@@ -147,6 +147,7 @@ class App extends React.Component {
       headers: {
         'content-type': 'application/json'
       },
+      mode: 'cors',
       body: JSON.stringify(this.recipes, null, 2)
     });
 

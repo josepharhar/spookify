@@ -8,18 +8,20 @@ const cors = require('cors');
 const bcrypt = require('bcrypt');
 const mkdirp = require('mkdirp');
 
-const recipesFilename = 'recipes.json';
+const bcryptSaltRounds = 10;
+//const recipesFilename = 'recipes.json';
+const usersFilepath = 'secrets/users.json';
+
 const server = express();
 
 server.use(cors());
 server.use(bodyParser.urlencoded({extended: false}));
 server.use(bodyParser.json());
 
-// Don't do that - copperwall 2021-05-02 6:23pm
-/*server.use((req, res, next) => {
+server.use((req, res, next) => {
   console.log(`${req.method} ${req.url}`);
   next();
-});*/
+});
 
 server.get('/', async (req, res) => {
   res.writeHead(200, {'content-type': 'text/plain'});
@@ -50,16 +52,22 @@ async function readOrCreateEmptyJsonFile(filepath) {
   }
 }
 
-async function createAccount(username, password) {
+async function writeObjectToFile(filepath, object) {
+  try {
+    mkdirp(path.dirname(filepath));
+    await fs.promises.writeFile(filepath, JSON.stringify(object, null, 2));
+  }
 }
 
 async function authenticate(username, password) {
+  const users = await readOrCreateEmptyFile(usersFilepath);
+  if (!users[username])
+    return false;
+  return await bcrypt.compare(password, users[username].passwordHash);
 }
 
-// /recipes?username=username&password=password
-//   json body
-server.get('/recipes', async (req, res) => {
-  //console.log('/recipes  req.query: ' + JSON.stringify(req.query, null, 2));
+// /createaccount?username=username&password=password
+server.post('/createaccount', async (req, res) => {
   const {username, password} = req.query;
   if (!username || !password) {
     res.writeHead(400, {'content-type': 'text/plain'});
@@ -69,6 +77,49 @@ server.get('/recipes', async (req, res) => {
     res.end();
     return;
   }
+
+  // TODO acquire lock of users.json
+  const users = await readOrCreateEmptyFile(usersFilepath);
+  if (users[username]) {
+    res.writeHead(400, {'content-type': 'text/plain'});
+    res.end(`account with username "${username}" already exists.`);
+    return;
+  }
+
+  users[username] = {};
+  users[username].passwordHash = await bcrypt.hash(password, saltRounds);
+  await writeObjectToFile(usersFilepath, users);
+
+  res.writeHead(200, {'content-type': 'text/plain'});
+  res.end(`successfully created user "${username}"`);
+});
+
+// /recipes?username=username&password=password
+//   json body
+server.get('/recipes', async (req, res) => {
+  const {username, password} = req.query;
+  if (!username || !password) {
+    res.writeHead(400, {'content-type': 'text/plain'});
+    res.write('bad request. both username and password are required in query params. given:\n');
+    res.write(`username: ${username}\n`);
+    res.write(`password: ${password}\n`);
+    res.end();
+    return;
+  }
+
+  // TODO acquire lock of users.json
+  const users = await readOrCreateEmptyFile(usersFilepath);
+  if (!users[username]) {
+    res.writeHead(400, {'content-type': 'text/plain'});
+    res.end(`User doesn't exist: "${username}"`);
+    return;
+  }
+
+  if (!users[username].recipes) {
+    users[username].recipes = [];
+    await writeObjectToFile(
+  }
+
 
   async function createAndReadEmptyFile() {
     await fs.promises.writeFile(recipesFilename, JSON.stringify({recipes: []}));

@@ -1,4 +1,6 @@
 const fs = require('fs');
+const http = require('http');
+const https = require('https');
 
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -70,5 +72,19 @@ server.post('/recipes', async (req, res) => {
   res.end(`successfully wrote to ${recipesFilename}`);
 });
 
-const port = process.env.PORT || 48880;
-server.listen(port, () => console.log('http server listening on port ' + port));
+/*const port = process.env.PORT || 48880;
+server.listen(port, () => console.log('http server listening on port ' + port));*/
+
+const credentials = {
+  key: fs.readFileSync('key.pem'),
+  cert: fs.readFileSync('cert.pem')
+};
+const httpsPort = process.env.PORT || 54321;
+const httpsServer = https.createServer(credentials, server);
+httpsServer.on('listening', () => console.log('httpsServer listening on port: ' + httpsPort));
+httpsServer.listen(httpsPort);
+
+/*const httpPort = httpsPort - 1;
+const httpServer = http.createServer(server);
+httpServer.on('listening', () => console.log('httpServer listening on port: ' + httpPort));
+httpServer.listen(httpPort);*/

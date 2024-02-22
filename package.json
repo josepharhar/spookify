@@ -1,0 +1,12 @@
+{
+  "name": "spookify",
+  "scripts": {
+    "server": "http-server"
+  },
+  "dependencies": {
+    "@spotify/web-api-ts-sdk": "^1.2.0"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}

@@ -2,7 +2,7 @@ import { SpotifyApi } from '/node_modules/@spotify/web-api-ts-sdk/dist/mjs/index
 import './error-popover.js';
 import './main.js';
 
-class SpookifyInit extends HTMLElement {
+class SpookifyLogin extends HTMLElement {
   constructor() {
     super();
   }
@@ -55,4 +55,4 @@ class SpookifyInit extends HTMLElement {
   }
 };
 
-customElements.define('spookify-init', SpookifyInit);
+customElements.define('spookify-login', SpookifyLogin);

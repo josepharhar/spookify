@@ -45,8 +45,8 @@ class SpookifyLogin extends HTMLElement {
 
     button.onclick = () => {
       // TODO does this throw an exception or something?
-      const secret = 
       try {
+        const secret = new URLSearchParams(location.search).get('code');
         window.spotifyApi = SpotifyApi.withClientCredentials(
           clientidElement.value,
           clientsecretElement.value);
@@ -58,7 +58,6 @@ class SpookifyLogin extends HTMLElement {
       }
 
       window.localStorage.clientid = clientidElement.value;
-      window.localStorage.clientsecret = clientsecretElement.value;
 
       dialog.close();
 

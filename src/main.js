@@ -13,7 +13,7 @@ function dialogError(str) {
 async function fetchWebApi(endpoint, method, body) {
   const params = {
     headers: {
-      Authorization: `Bearer ${code}`,
+      Authorization: `Bearer ${window.localStorage.accessToken}`,
     },
     method: method
   };
@@ -38,7 +38,36 @@ function log(str) {
     return;
   }
 
+  const codeVerifier = window.localStorage.codeVerifier;
+  if (!codeVerifier) {
+    dialogError('codeVerifier is missing from localStorage');
+    return;
+  }
+
   log('code: ' + code);
+  log('going to get authorization code...');
+
+  const payload = {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams({
+      client_id: window.localStorage.clientid,
+      grant_type: 'authorization_code',
+      code,
+      redirect_uri: redirectUri,
+      code_verifier: codeVerifier,
+    }),
+  };
+  // TODO add error handling and logging here...?
+  const body = await fetch(url, payload);
+  const response = await body.json();
+  const accessToken = response.access_token;
+  window.localStorage.accessToken = accessToken;
+
+  log('access_token: ' + accessToken);
+
   log('going to fetch /me...');
   const result = fetchWebApi('me', 'GET');
   window.result = result;

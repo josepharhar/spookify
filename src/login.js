@@ -9,7 +9,7 @@ class SpookifyLogin extends HTMLElement {
 
   connectedCallback() {
     // TODO consider putting this in a shadowroot instead with adoptedStyleSheets?
-    // TODO consider using a form element for submission keyboard behavior
+
     const scopes = [
       'playlist-read-private',
       'playlist-read-collaborative',
@@ -20,18 +20,19 @@ class SpookifyLogin extends HTMLElement {
       'user-read-email',
       'user-read-private'
     ];
-    const scopesString = scopes.join('%20');
+    const scopesString = scopes.join(' ');
 
-    const actionUrl = new URLSearchParams();
-    actionUrl.set('response_type', 'code');
-    actionUrl.set('redirect_uri', window.location.href);
-    actionUrl.set('scope', scopesString);
-
+    // TODO apparently i should do some more secuoority here:
+    // https://developer.spotify.com/documentation/web-api/tutorials/code-pkce-flow
     this.innerHTML = `
       <dialog>
-        <form action="${actionUrl.toString()}">
+        <form action="https://accounts.spotify.com/authorize">
           <label for=clientid>Client ID</label>
           <input id=clientid name=client_id>
+          <input type=hidden name=response_type value=code>
+          <input type=hidden name=scope value="${scopesString}">
+          <!--<input type=hidden name=redirect_uri value="${window.location.href}">-->
+          <input type=hidden name=redirect_uri value="http://localhost:8080">
           <br>
           <button>login to spotify</button>
         </form>

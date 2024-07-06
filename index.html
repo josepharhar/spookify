@@ -1,5 +1,36 @@
 <!DOCTYPE html>
 <title>spookify</title>
-<body>
-<script type=module src="/src/login.js"></script>
-<spookify-login></spookify-login>
+<h2>login</h2>
+<form action="https://accounts.spotify.com/authorize">
+  <label for=clientid>Client ID</label>
+  <input id=clientid name=client_id>
+  <input type=hidden name=response_type value=code>
+  <input type=hidden name=scope id=scopeinput>
+  <input type=hidden name=redirect_uri value="http://localhost:8080/main.html">
+  <br>
+  <button>login to spotify</button>
+</form>
+
+<script>
+const scopes = [
+  'playlist-read-private',
+  'playlist-read-collaborative',
+  'playlist-modify-private',
+  'playlist-modify-public',
+  'user-library-modify',
+  'user-library-read',
+  'user-read-email',
+  'user-read-private'
+];
+const scopesString = scopes.join(' ');
+document.getElementById('scopeinput').value = scopesString;
+
+const clientidElement = document.getElementById('clientid');
+const button = document.querySelector('button');
+
+clientidElement.value = window.localStorage.clientid || '';
+
+button.onclick = () => {
+  window.localStorage.clientid = clientidElement.value;
+};
+</script>

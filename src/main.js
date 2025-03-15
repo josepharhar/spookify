@@ -3,9 +3,9 @@ import { SpotifyApi } from '/node_modules/@spotify/web-api-ts-sdk/dist/mjs/index
 
 const code = new URLSearchParams(window.location.search).get('code');
 
-function dialogError(str) {
+function dialogError(html) {
   const dialog = document.createElement('dialog');
-  dialog.textContent = str;
+  dialog.innerHTML = html;
   document.body.appendChild(dialog);
   dialog.showModal();
 }
@@ -47,27 +47,35 @@ function log(str) {
   log('code: ' + code);
   log('going to get authorization code...');
 
-  const payload = {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams({
-      client_id: window.localStorage.clientid,
-      grant_type: 'authorization_code',
-      code,
-      redirect_uri: window.location.origin + '/main.html',
-      code_verifier: codeVerifier,
-    }),
-  };
-  // TODO add error handling and logging here...?
-  const body = await fetch('https://accounts.spotify.com/api/token', payload);
-  const response = await body.json();
-  console.log('got response for authorization code:', response);
-  const accessToken = response.access_token;
-  window.localStorage.accessToken = accessToken;
+  try {
+    const payload = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        client_id: window.localStorage.clientid,
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: window.location.origin + '/main.html',
+        code_verifier: codeVerifier,
+      }),
+    };
+    // TODO add error handling and logging here...?
+    const body = await fetch('https://accounts.spotify.com/api/token', payload);
+    const response = await body.json();
+    console.log('got response for authorization code:', response);
+    if (!response.access_token) {
+      dialogError('no access token in response: <pre>' + JSON.stringify(response, null, 2));
+      return;
+    }
+    window.localStorage.accessToken = response.access_token;
+  } catch (error) {
+    dialogError('got error while getting access token: ' + error);
+    return;
+  }
 
-  log('access_token: ' + accessToken);
+  log('access_token: ' + window.localStorage.accessToken);
 
   log('going to fetch /me...');
   const result = fetchWebApi('me', 'GET');

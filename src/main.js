@@ -1,6 +1,3 @@
-// TODO delet this and package.json
-import { SpotifyApi } from '/node_modules/@spotify/web-api-ts-sdk/dist/mjs/index.js';
-
 const code = new URLSearchParams(window.location.search).get('code');
 
 function dialogError(html) {
@@ -93,9 +90,10 @@ function log(str) {
   window.meResult = await fetchWebApi('me', 'GET');
 
   log('going to fetch /me/playlists to window.mePlaylistsResult...');
-  window.playlists = [];
+  let playlists = [];
   let nextUrl = 'https://api.spotify.com/v1/me/playlists?limit=50';
   while (nextUrl) {
+    log('fetching url: ' + nextUrl);
     const params = {
       method: 'GET',
       headers: {
@@ -104,14 +102,17 @@ function log(str) {
     };
     const response = await fetch(nextUrl, params);
     if (!response.ok) {
+      // TODO handle rate limiting here
       dialogError('got bad response: ' + response.status);
       console.log('got bad response: ', response);
       return;
     }
     const json = await response.json();
-    window.playlists = window.playlists.concat(json.items);
+    playlists = playlists.concat(json.items);
     nextUrl = json.next;
   }
+  idbKeyval.set('playlists', playlists);
+  idbKeyval.set('playlists-timestamp', new Date().toString());
 })();
 
 // TODO use snapshot_id to cache playlists: https://developer.spotify.com/documentation/web-api/concepts/rate-limits#:~:text=set%20of%20objects.-,Use%20the%20snapshot_id,-Playlist%20APIs%20expose

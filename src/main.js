@@ -21,7 +21,7 @@ async function fetchWebApi(endpoint, method, body) {
     params.body = JSON.stringify(body);
   }
 
-  const res = await fetch(`https://api.spotify.com/${endpoint}`, params);
+  const res = await fetch(`https://api.spotify.com/v1/${endpoint}`, params);
   return await res.json();
 }
 
@@ -56,13 +56,14 @@ function log(str) {
       client_id: window.localStorage.clientid,
       grant_type: 'authorization_code',
       code,
-      redirect_uri: redirectUri,
+      redirect_uri: window.location.origin + '/main.html',
       code_verifier: codeVerifier,
     }),
   };
   // TODO add error handling and logging here...?
-  const body = await fetch(url, payload);
+  const body = await fetch('https://accounts.spotify.com/api/token', payload);
   const response = await body.json();
+  console.log('got response for authorization code:', response);
   const accessToken = response.access_token;
   window.localStorage.accessToken = accessToken;
 

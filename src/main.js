@@ -10,20 +10,32 @@ function dialogError(html) {
   dialog.showModal();
 }
 
-async function fetchWebApi(endpoint, method, body) {
+function authorizationHeader() {
+  return `Bearer ${window.localStorage.accessToken}`;
+}
+
+async function fetchWebApi(endpoint, method, queryParamsObject) {
   const params = {
     headers: {
-      Authorization: `Bearer ${window.localStorage.accessToken}`,
+      Authorization: authorizationHeader()
     },
     method: method
   };
-  if (body) {
+  // maybe a request body is needed for certain POSTs?
+  /*if (body) {
     params.body = JSON.stringify(body);
-  }
+  }*/
+  const queryParamsString = new URLSearchParams(queryParamsObject).toString();
 
-  const res = await fetch(`https://api.spotify.com/v1/${endpoint}`, params);
-  return await res.json();
+  return fetch(`https://api.spotify.com/v1/${endpoint}?${queryParamsString}`, params);
+  /*const res = await fetch(`https://api.spotify.com/v1/${endpoint}?${queryParamsString}`, params);
+  return await res.json();*/
 }
+
+/*async function fetchWebApiList(endpoint) {
+  const results = [];
+  const method = 'GET';
+}*/
 
 function log(str) {
   console.log(str);
@@ -77,8 +89,29 @@ function log(str) {
 
   log('access_token: ' + window.localStorage.accessToken);
 
-  log('going to fetch /me...');
-  const result = fetchWebApi('me', 'GET');
-  window.result = result;
-  log('window.result set');
+  log('going to fetch /me to window.meResult...');
+  window.meResult = await fetchWebApi('me', 'GET');
+
+  log('going to fetch /me/playlists to window.mePlaylistsResult...');
+  window.playlists = [];
+  let nextUrl = 'https://api.spotify.com/v1/me/playlists?limit=50';
+  while (nextUrl) {
+    const params = {
+      method: 'GET',
+      headers: {
+        Authorization: authorizationHeader()
+      }
+    };
+    const response = await fetch(nextUrl, params);
+    if (!response.ok) {
+      dialogError('got bad response: ' + response.status);
+      console.log('got bad response: ', response);
+      return;
+    }
+    const json = await response.json();
+    window.playlists = window.playlists.concat(json.items);
+    nextUrl = json.next;
+  }
 })();
+
+// TODO use snapshot_id to cache playlists: https://developer.spotify.com/documentation/web-api/concepts/rate-limits#:~:text=set%20of%20objects.-,Use%20the%20snapshot_id,-Playlist%20APIs%20expose

@@ -219,16 +219,16 @@ async function updateLikedSongsText() {
       for (const playlistItem of sourcePlaylistItems) {
         const trackId = playlistItem.track.id;
         if (likedSongIds.has(trackId)) {
-          filteredTrackIds.push(trackId);
+          filteredTrackIds.push('spotify:track:' + trackId);
         }
       }
 
       log('filteredTrackIds.length: ' + filteredTrackIds.length);
       console.log('filteredTrackIds: ', filteredTrackIds);
       const body = JSON.stringify({
-        uris: filteredTrackIds.join(',')
+        uris: filteredTrackIds
       });
-      await fetchWebApi(`playlists/${targetId}/tracks`, 'PUT', {body});
+      await fetchWebApi(`playlists/${targetId}/tracks`, 'PUT', /*queryParams=*/{}, /*fetchParams=*/{body});
     });
   }
 

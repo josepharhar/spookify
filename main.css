@@ -1,0 +1,27 @@
+body {
+  margin: 0;
+  font-family: sans-serif;
+}
+
+.split {
+  display: grid;
+  height: 100vh;
+  box-sizing: border-box;
+  grid-template-columns: 1fr 1fr;
+}
+
+.split > * {
+  padding: 8px;
+  box-sizing: border-box;
+  max-height: 100vh;
+}
+
+#log {
+  font-family: monospace;
+  overflow-wrap: anywhere;
+  margin: 0;
+  padding-inline-start: 20px;
+  overflow-y: scroll;
+  /* TODO find a better way to prevent scrollbar on body */
+  max-height: 90%;
+}

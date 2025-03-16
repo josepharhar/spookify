@@ -53,9 +53,9 @@ async function fetchWebApi(endpoint, method, queryParamsObject) {
 
 function log(str) {
   console.log(str);
-  const div = document.createElement('div');
-  div.textContent = str;
-  document.getElementById('log').appendChild(div);
+  const li = document.createElement('li');
+  li.textContent = str;
+  document.getElementById('log').appendChild(li);
 }
 
 // Downloads playlists from spotify and stores them in idb

@@ -1,18 +1,27 @@
 <!DOCTYPE html>
-<link rel=stylesheet href="src/main.css"></script>
+<link rel=stylesheet href="main.css"></script>
 <script type=module src="node_modules/idb-keyval/dist/umd.js"></script>
-<script type=module src="src/main.js"></script>
+<script type=module src="main.js"></script>
 
-<div>
-  <div>playlists: <span id=playlistsnum></span></div>
-  <div>last updated: <span id=playlistslastupdated></span></div>
-  <div><button id=playlistsupdate>update liked songs</button></div>
+<div class=split>
+  <div>
+    <div>
+      <div>playlists: <span id=playlistsnum></span></div>
+      <div>last updated: <span id=playlistslastupdated></span></div>
+      <div><button id=playlistsupdate>update playlists</button></div>
+    </div>
+
+    <br>
+
+    <div>
+      <div>liked songs: <span id=likedsongsnum></span></div>
+      <div>last updated: <span id=likedsongslastupdated></span></div>
+      <div><button id=likedsongsupdate>update liked songs</button></div>
+    </div>
+  </div>
+
+  <div>
+    <div>Log</div>
+    <ul id=log></ul>
+  </div>
 </div>
-
-<div>
-  <div>liked songs: <span id=likedsongsnum></span></div>
-  <div>last updated: <span id=likedsongslastupdated></span></div>
-  <div><button id=likedsongsupdate>update liked songs</button></div>
-</div>
-
-<div id=log></div>

@@ -25,3 +25,7 @@ body {
   /* TODO find a better way to prevent scrollbar on body */
   max-height: 90%;
 }
+
+#buttons > div {
+  margin: 8px;
+}

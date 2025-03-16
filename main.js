@@ -13,6 +13,7 @@ function dialogError(html) {
   restartButton.textContent = 'log in again';
   dialog.appendChild(restartButton);
   restartButton.addEventListener('click', () => {
+    window.localStorage.removeItem('accessToken');
     window.location.href = '/';
   });
 
@@ -28,22 +29,19 @@ function authorizationHeader() {
   return `Bearer ${window.localStorage.accessToken}`;
 }
 
-async function fetchWebApi(endpoint, method, queryParamsObject) {
-  const params = {
-    headers: {
-      Authorization: authorizationHeader()
-    },
-    method: method
-  };
-  // maybe a request body is needed for certain POSTs?
-  /*if (body) {
-    params.body = JSON.stringify(body);
-  }*/
+async function fetchWebApi(endpoint, method, queryParamsObject, fetchParams) {
+  if (!fetchParams) {
+    fetchParams = {};
+  }
+  if (!fetchParams.headers) {
+    fetchParams.headers = {};
+  }
+  fetchParams.headers['Authorization'] = authorizationHeader();
+  fetchParams.method = method;
+
   const queryParamsString = new URLSearchParams(queryParamsObject).toString();
 
-  return fetch(`https://api.spotify.com/v1/${endpoint}?${queryParamsString}`, params);
-  /*const res = await fetch(`https://api.spotify.com/v1/${endpoint}?${queryParamsString}`, params);
-  return await res.json();*/
+  return fetch(`https://api.spotify.com/v1/${endpoint}?${queryParamsString}`, fetchParams);
 }
 
 /*async function fetchWebApiList(endpoint) {
@@ -58,20 +56,17 @@ function log(str) {
   document.getElementById('log').appendChild(li);
 }
 
-// Downloads playlists from spotify and stores them in idb
-async function downloadPlaylists() {
-  log('going to fetch /me/playlists to window.mePlaylistsResult...');
-  let playlists = [];
-  let nextUrl = 'https://api.spotify.com/v1/me/playlists?limit=50';
-  while (nextUrl) {
-    log('fetching url: ' + nextUrl);
+async function downloadList(url) {
+  let list = [];
+  while (url) {
+    log('fetching url: ' + url);
     const params = {
       method: 'GET',
       headers: {
         Authorization: authorizationHeader()
       }
     };
-    const response = await fetch(nextUrl, params);
+    const response = await fetch(url, params);
     if (!response.ok) {
       // TODO handle rate limiting here
       dialogError('got bad response: ' + response.status);
@@ -79,11 +74,25 @@ async function downloadPlaylists() {
       return;
     }
     const json = await response.json();
-    playlists = playlists.concat(json.items);
-    nextUrl = json.next;
+    list = list.concat(json.items);
+    url = json.next;
   }
+  return list;
+}
+
+// Downloads playlists from spotify and stores them in idb
+async function downloadPlaylists() {
+  log('going to download playlists...');
+  const playlists = await downloadList('https://api.spotify.com/v1/me/playlists?limit=50');
   await idbKeyval.set('playlists', playlists);
   await idbKeyval.set('playlists-timestamp', new Date().toString());
+}
+
+async function downloadLikedSongs() {
+  log('going to fetch liked songs...');
+  const likedSongs = await downloadList('https://api.spotify.com/v1/me/tracks?limit=50');
+  await idbKeyval.set('likedsongs', likedSongs);
+  await idbKeyval.set('likedsongs-timestamp', new Date().toString());
 }
 
 // Sets access token to localStorage.accessToken. Returns true if there was an
@@ -155,13 +164,73 @@ async function updateLikedSongsText() {
     await updateLikedSongsText();
   });
 
-  log('code: ' + code);
-  log('going to get authorization code...');
-  if (await downloadAccessToken()) {
-    log('failed to get access token. aborting.');
+  // TODO handle refreshing access token better
+  log('access token: ' + window.localStorage.accessToken);
+  if (!window.localStorage.accessToken) {
+    //log('code: ' + code);
+    log('going to get access token...');
+    if (await downloadAccessToken()) {
+      log('failed to get access token. aborting.');
+      return;
+    }
+    log('access token: ' + window.localStorage.accessToken);
+  }
+
+  const nameToPlaylist = new Map();
+  const favorites = [];
+  const playlists = await idbKeyval.get('playlists');
+  if (!playlists) {
     return;
   }
-  log('access_token: ' + window.localStorage.accessToken);
+  for (const playlist of playlists) {
+    nameToPlaylist.set(playlist.name, playlist);
+    if (playlist.name.endsWith(' (Favorites)')) {
+      favorites.push(playlist.name);
+    }
+  }
+  for (const targetName of favorites) {
+    const sourceName = targetName.replace(' (Favorites)', '');
+    const source = nameToPlaylist.get(sourceName);
+    const target = nameToPlaylist.get(targetName);
+    console.log(`${sourceName} => ${targetName} `, source, target);
+
+    const div = document.createElement('div');
+    const button = document.createElement('button');
+    button.textContent = `${sourceName} => ${targetName}`;
+    document.getElementById('buttons').appendChild(div);
+    div.appendChild(button);
+    button.addEventListener('click', async () => {
+      log(`going to filter "${sourceName}" to "${targetName}"`);
+      const sourceId = source.id;
+      const targetId = target.id;
+      const sourcePlaylistItems = await downloadList(`https://api.spotify.com/v1/playlists/${sourceId}/tracks?limit=50`);
+      log('got sourcePlaylistItems. size: ' + sourcePlaylistItems.length);
+      // TODO download target songs and figure out how to not mess with local songs
+      //const targetSongs = await downloadList(`https://api.spotify.com/v1/playlists/${targetId}/tracks?limit=50`);
+      //console.log('targetSongs: ', targetSongs);
+
+      const likedSongs = await idbKeyval.get('likedsongs');
+      const likedSongIds = new Set();
+      for (const likedSong of likedSongs) {
+        likedSongIds.add(likedSong.track.id);
+      }
+
+      const filteredTrackIds = [];
+      for (const playlistItem of sourcePlaylistItems) {
+        const trackId = playlistItem.track.id;
+        if (likedSongIds.has(trackId)) {
+          filteredTrackIds.push(trackId);
+        }
+      }
+
+      log('filteredTrackIds.length: ' + filteredTrackIds.length);
+      console.log('filteredTrackIds: ', filteredTrackIds);
+      const body = JSON.stringify({
+        uris: filteredTrackIds.join(',')
+      });
+      await fetchWebApi(`playlists/${targetId}/tracks`, 'PUT', {body});
+    });
+  }
 
   /*log('going to fetch /me to window.meResult...');
   window.meResult = await fetchWebApi('me', 'GET');*/

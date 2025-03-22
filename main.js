@@ -241,9 +241,11 @@ async function updateButtons() {
 
   if (!(await idbKeyval.get('playlists-timestamp'))) {
     await downloadPlaylists();
+    await updatePlaylistsText();
   }
   if (!(await idbKeyval.get('likedsongs-timestamp'))) {
     await downloadLikedSongs();
+    await updateLikedSongsText();
   }
   likedSongsUpdate.removeAttribute('disabled');
   playlistsUpdate.removeAttribute('disabled');

@@ -44,11 +44,6 @@ async function fetchWebApi(endpoint, method, queryParamsObject, fetchParams) {
   return fetch(`https://api.spotify.com/v1/${endpoint}?${queryParamsString}`, fetchParams);
 }
 
-/*async function fetchWebApiList(endpoint) {
-  const results = [];
-  const method = 'GET';
-}*/
-
 function log(str) {
   console.log(str);
   const li = document.createElement('li');
@@ -141,41 +136,7 @@ async function updateLikedSongsText() {
   likedSongsLastUpdated.textContent = cachedLikedSongsTimestamp ? cachedLikedSongsTimestamp : 'never';
 }
 
-(async () => {
-  if (!code) {
-    dialogError('code query parameter is missing');
-    return;
-  }
-
-  if (!window.localStorage.codeVerifier) {
-    dialogError('codeVerifier is missing from localStorage');
-    return;
-  }
-
-  await updatePlaylistsText();
-  playlistsUpdate.addEventListener('click', async () => {
-    await downloadPlaylists();
-    await updatePlaylistsText();
-  });
-
-  await updateLikedSongsText();
-  likedSongsUpdate.addEventListener('click', async () => {
-    await downloadLikedSongs();
-    await updateLikedSongsText();
-  });
-
-  // TODO handle refreshing access token better
-  log('access token: ' + window.localStorage.accessToken);
-  if (!window.localStorage.accessToken) {
-    //log('code: ' + code);
-    log('going to get access token...');
-    if (await downloadAccessToken()) {
-      log('failed to get access token. aborting.');
-      return;
-    }
-    log('access token: ' + window.localStorage.accessToken);
-  }
-
+async function updateButtons() {
   const nameToPlaylist = new Map();
   const favorites = [];
   const playlists = await idbKeyval.get('playlists');
@@ -231,9 +192,60 @@ async function updateLikedSongsText() {
       await fetchWebApi(`playlists/${targetId}/tracks`, 'PUT', /*queryParams=*/{}, /*fetchParams=*/{body});
     });
   }
+}
 
-  /*log('going to fetch /me to window.meResult...');
-  window.meResult = await fetchWebApi('me', 'GET');*/
+(async () => {
+  if (!code) {
+    dialogError('code query parameter is missing');
+    return;
+  }
+
+  if (!window.localStorage.codeVerifier) {
+    dialogError('codeVerifier is missing from localStorage');
+    return;
+  }
+
+  await updatePlaylistsText();
+  playlistsUpdate.addEventListener('click', async () => {
+    likedSongsUpdate.setAttribute('disabled', '');
+    playlistsUpdate.setAttribute('disabled', '');
+    await downloadPlaylists();
+    await updatePlaylistsText();
+    await updateButtons();
+    likedSongsUpdate.removeAttribute('disabled');
+    playlistsUpdate.removeAttribute('disabled');
+  });
+
+  await updateLikedSongsText();
+  likedSongsUpdate.addEventListener('click', async () => {
+    likedSongsUpdate.setAttribute('disabled', '');
+    playlistsUpdate.setAttribute('disabled', '');
+    await downloadLikedSongs();
+    await updateLikedSongsText();
+    await updateButtons();
+    likedSongsUpdate.removeAttribute('disabled');
+    playlistsUpdate.removeAttribute('disabled');
+  });
+
+  // TODO handle refreshing access token better
+  log('access token: ' + window.localStorage.accessToken);
+  if (!window.localStorage.accessToken) {
+    //log('code: ' + code);
+    log('going to get access token...');
+    if (await downloadAccessToken()) {
+      log('failed to get access token. aborting.');
+      return;
+    }
+    log('access token: ' + window.localStorage.accessToken);
+  }
+
+  if (!(await idbKeyval.get('playlists-timestamp'))) {
+    await downloadPlaylists();
+  }
+  if (!(await idbKeyval.get('likedsongs-timestamp'))) {
+    await downloadLikedSongs();
+  }
+  likedSongsUpdate.removeAttribute('disabled');
+  playlistsUpdate.removeAttribute('disabled');
+  await updateButtons();
 })();
-
-// TODO use snapshot_id to cache playlists: https://developer.spotify.com/documentation/web-api/concepts/rate-limits#:~:text=set%20of%20objects.-,Use%20the%20snapshot_id,-Playlist%20APIs%20expose

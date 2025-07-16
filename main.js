@@ -149,6 +149,10 @@ async function updateButtons() {
       favorites.push(playlist.name);
     }
   }
+
+  const buttonsContainer = document.getElementById('buttons');
+  buttonsContainer.innerHTML = '';
+
   for (const targetName of favorites) {
     const sourceName = targetName.replace(' (Favorites)', '');
     const source = nameToPlaylist.get(sourceName);
@@ -158,7 +162,7 @@ async function updateButtons() {
     const div = document.createElement('div');
     const button = document.createElement('button');
     button.textContent = `${sourceName} => ${targetName}`;
-    document.getElementById('buttons').appendChild(div);
+    buttonsContainer.appendChild(div);
     div.appendChild(button);
     button.addEventListener('click', async () => {
       log(`going to filter "${sourceName}" to "${targetName}"`);
@@ -190,6 +194,13 @@ async function updateButtons() {
         uris: filteredTrackIds
       });
       await fetchWebApi(`playlists/${targetId}/tracks`, 'PUT', /*queryParams=*/{}, /*fetchParams=*/{body});
+
+      const updateDescriptionFetchParams = {
+        body: JSON.stringify({
+          description: `Updated by Spookify on ${new Date().toDateString()}`
+        })
+      };
+      await fetchWebApi(`playlists/${targetId}`, 'PUT', /*queryParams=*/{}, updateDescriptionFetchParams);
     });
   }
 }

@@ -206,15 +206,47 @@ async function updateButtons() {
 }
 
 (async () => {
-  if (!code) {
-    dialogError('code query parameter is missing');
-    return;
+  let hasValidToken = false;
+  if (window.localStorage.accessToken) {
+    log('checking existing access token...');
+    try {
+      const res = await fetch('https://api.spotify.com/v1/me', {
+        headers: {
+          'Authorization': `Bearer ${window.localStorage.accessToken}`
+        }
+      });
+      if (res.ok) {
+        hasValidToken = true;
+        log('existing access token is valid');
+      } else {
+        log('existing access token is invalid/expired');
+        window.localStorage.removeItem('accessToken');
+      }
+    } catch (e) {
+      log('error checking access token: ' + e);
+      window.localStorage.removeItem('accessToken');
+    }
   }
 
-  if (!window.localStorage.codeVerifier) {
-    dialogError('codeVerifier is missing from localStorage');
-    return;
+  if (!hasValidToken) {
+    if (!code) {
+      dialogError('code query parameter is missing or session expired');
+      return;
+    }
+
+    if (!window.localStorage.codeVerifier) {
+      dialogError('codeVerifier is missing from localStorage');
+      return;
+    }
+
+    log('going to get access token...');
+    if (await downloadAccessToken()) {
+      log('failed to get access token. aborting.');
+      return;
+    }
   }
+
+  log('access token: ' + window.localStorage.accessToken);
 
   await updatePlaylistsText();
   playlistsUpdate.addEventListener('click', async () => {
@@ -237,18 +269,6 @@ async function updateButtons() {
     likedSongsUpdate.removeAttribute('disabled');
     playlistsUpdate.removeAttribute('disabled');
   });
-
-  // TODO handle refreshing access token better
-  log('access token: ' + window.localStorage.accessToken);
-  if (!window.localStorage.accessToken) {
-    //log('code: ' + code);
-    log('going to get access token...');
-    if (await downloadAccessToken()) {
-      log('failed to get access token. aborting.');
-      return;
-    }
-    log('access token: ' + window.localStorage.accessToken);
-  }
 
   if (!(await idbKeyval.get('playlists-timestamp'))) {
     await downloadPlaylists();

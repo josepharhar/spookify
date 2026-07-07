@@ -36,6 +36,24 @@
   const clientidElement = document.getElementById('clientid');
   const button = document.querySelector('button');
 
+  if (window.localStorage.accessToken) {
+    button.textContent = 'Checking session...';
+    try {
+      const res = await fetch('https://api.spotify.com/v1/me', {
+        headers: {
+          'Authorization': `Bearer ${window.localStorage.accessToken}`
+        }
+      });
+      if (res.ok) {
+        window.location.href = '/main.html';
+        return;
+      }
+    } catch (e) {
+      console.error('Error validating token:', e);
+    }
+    window.localStorage.removeItem('accessToken');
+  }
+
   clientidElement.value = window.localStorage.clientid || '';
 
   button.onclick = () => {

@@ -1,99 +1,306 @@
 <!DOCTYPE html>
-<link rel=apple-touch-icon sizes=180x180 href="/apple-touch-icon.png">
-<link rel=icon type="image/png" sizes=32x32 href="/favicon-32x32.png">
-<link rel=icon type="image/png" sizes=16x16 href="/favicon-16x16.png">
-<link rel=stylesheet href="shared.css">
-<title>spookify</title>
-<h2>Login to Spotify</h2>
-<p>If you don't have a client ID, then <a href="https://developer.spotify.com/documentation/web-api/concepts/apps">create one</a> and add a Redirect URI of <span id=redirecturitext></span></p>
-<form action="https://accounts.spotify.com/authorize">
-  <label for=clientid>Client ID</label>
-  <input id=clientid name=client_id>
-  <input type=hidden name=response_type value=code>
-  <input type=hidden name=scope id=scopeinput>
-  <input type=hidden name=redirect_uri id=redirectInput value="redirect_uri_placeholder">
-  <input type=hidden name=code_challenge_method value=S256>
-  <input type=hidden name=code_challenge id=codechallenge>
-  <br>
-  <button disabled>loading...</button>
-</form>
-
-<script>
-(async () => {
-  const scopes = [
-    'playlist-read-private',
-    'playlist-read-collaborative',
-    'playlist-modify-private',
-    'playlist-modify-public',
-    'user-library-modify',
-    'user-library-read',
-    'user-read-email',
-    'user-read-private'
-  ];
-  const scopesString = scopes.join(' ');
-  document.getElementById('scopeinput').value = scopesString;
-
-  const clientidElement = document.getElementById('clientid');
-  const button = document.querySelector('button');
-
-  if (window.localStorage.accessToken) {
-    button.textContent = 'Checking session...';
-    try {
-      const res = await fetch('https://api.spotify.com/v1/me', {
-        headers: {
-          'Authorization': `Bearer ${window.localStorage.accessToken}`
-        }
-      });
-      if (res.ok) {
-        window.location.href = '/main.html';
-        return;
-      }
-    } catch (e) {
-      console.error('Error validating token:', e);
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Spookify is a premium helper utility to filter and sync your favorite tracks across Spotify playlists.">
+  <title>Login | Spookify 👻</title>
+  
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="stylesheet" href="shared.css">
+  
+  <style>
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
     }
-    window.localStorage.removeItem('accessToken');
-  }
+    
+    .login-container {
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
+      padding: 2.5rem;
+      max-width: 500px;
+      width: 100%;
+      box-shadow: var(--shadow-lg);
+      text-align: center;
+      animation: fadeIn 0.6s ease-out;
+    }
 
-  clientidElement.value = window.localStorage.clientid || '';
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
 
-  button.onclick = () => {
-    window.localStorage.clientid = clientidElement.value;
-  };
+    .logo {
+      font-size: 2.75rem;
+      font-weight: 700;
+      letter-spacing: -0.05em;
+      background: linear-gradient(135deg, var(--color-spotify) 0%, var(--color-purple) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+    }
 
-  const redirecturi = window.location.origin + '/main.html';
-  document.getElementById('redirecturitext').textContent = redirecturi;
-  document.getElementById('redirectInput').value = redirecturi;
+    .subtitle {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      margin-bottom: 2rem;
+    }
 
-	const generateRandomString = (length) => {
-		const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-		const values = crypto.getRandomValues(new Uint8Array(length));
-		return values.reduce((acc, x) => acc + possible[x % possible.length], "");
-	}
-	const codeVerifier  = generateRandomString(64);
-  window.localStorage.codeVerifier = codeVerifier;
-	const sha256 = async (plain) => {
-		const encoder = new TextEncoder()
-		const data = encoder.encode(plain)
-		return window.crypto.subtle.digest('SHA-256', data)
-	}
-	const base64encode = (input) => {
-		return btoa(String.fromCharCode(...new Uint8Array(input)))
-			.replace(/=/g, '')
-			.replace(/\+/g, '-')
-			.replace(/\//g, '_');
-	}
-	const hashed = await sha256(codeVerifier)
-	const codeChallenge = base64encode(hashed);
+    .info-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      padding: 1.25rem;
+      margin-bottom: 2rem;
+      text-align: left;
+    }
 
-  document.getElementById('codechallenge').value = codeChallenge;
-  button.textContent = 'Login to spotify';
-  button.removeAttribute('disabled');
+    .info-card h3 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+    }
 
-  const clientId = new URLSearchParams(window.location.search).get('clientid');
-  if (clientId) {
-    window.localStorage.clientid = clientId;
-    clientidElement.value = clientId;
-    document.querySelector('form').submit();
-  }
-})();
-</script>
+    .info-card p {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    .redirect-uri-box {
+      display: flex;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 0.5rem 0.75rem;
+      margin-top: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .redirect-uri-box code {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--color-purple-hover);
+      flex-grow: 1;
+      overflow-x: auto;
+      white-space: nowrap;
+      margin-right: 0.5rem;
+    }
+
+    .copy-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: var(--text-primary);
+      padding: 0.25rem 0.55rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      font-weight: 500;
+      transition: var(--transition-fast);
+    }
+
+    .copy-btn:hover {
+      background: var(--color-purple);
+    }
+
+    .link-help {
+      font-size: 0.8rem;
+      margin-top: 0.5rem;
+    }
+
+    .input-group {
+      text-align: left;
+      margin-bottom: 1.5rem;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .input-group input {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 0.75rem 1rem;
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      font-size: 0.95rem;
+      transition: var(--transition-fast);
+    }
+
+    .input-group input:focus {
+      outline: none;
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.2);
+    }
+
+    .login-btn {
+      width: 100%;
+      background: linear-gradient(135deg, var(--color-spotify) 0%, var(--color-purple) 100%);
+      border: none;
+      border-radius: 12px;
+      padding: 0.9rem 1.5rem;
+      color: white;
+      font-family: var(--font-sans);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition-fast);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .login-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px var(--color-glow);
+    }
+
+    .login-btn:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    .login-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      background: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <main class="login-container">
+    <h1 class="logo">Spookify 👻</h1>
+    <p class="subtitle">Filter Spotify playlists by your liked songs</p>
+
+    <section class="info-card">
+      <h3>Setup Instructions</h3>
+      <p>Before logging in, create a Spotify App in the developer portal and add the following redirect URI to your app's settings:</p>
+      <div class="redirect-uri-box">
+        <code id="redirecturitext"></code>
+        <button type="button" class="copy-btn" id="copybtn">Copy</button>
+      </div>
+      <p class="link-help">Need a Client ID? <a href="https://developer.spotify.com/documentation/web-api/concepts/apps" target="_blank" rel="noopener">Create one here</a></p>
+    </section>
+
+    <form action="https://accounts.spotify.com/authorize">
+      <div class="input-group">
+        <label for="clientid">Client ID</label>
+        <input id="clientid" name="client_id" placeholder="Enter your Spotify Client ID..." required autocomplete="on">
+      </div>
+      <input type="hidden" name="response_type" value="code">
+      <input type="hidden" name="scope" id="scopeinput">
+      <input type="hidden" name="redirect_uri" id="redirectInput" value="redirect_uri_placeholder">
+      <input type="hidden" name="code_challenge_method" value="S256">
+      <input type="hidden" name="code_challenge" id="codechallenge">
+      <button class="login-btn" disabled>Loading...</button>
+    </form>
+  </main>
+
+  <script>
+  (async () => {
+    const scopes = [
+      'playlist-read-private',
+      'playlist-read-collaborative',
+      'playlist-modify-private',
+      'playlist-modify-public',
+      'user-library-modify',
+      'user-library-read',
+      'user-read-email',
+      'user-read-private'
+    ];
+    const scopesString = scopes.join(' ');
+    document.getElementById('scopeinput').value = scopesString;
+
+    const clientidElement = document.getElementById('clientid');
+    const button = document.querySelector('.login-btn');
+
+    if (window.localStorage.accessToken) {
+      button.textContent = 'Checking session...';
+      try {
+        const res = await fetch('https://api.spotify.com/v1/me', {
+          headers: {
+            'Authorization': `Bearer ${window.localStorage.accessToken}`
+          }
+        });
+        if (res.ok) {
+          window.location.href = '/main.html';
+          return;
+        }
+      } catch (e) {
+        console.error('Error validating token:', e);
+      }
+      window.localStorage.removeItem('accessToken');
+    }
+
+    clientidElement.value = window.localStorage.clientid || '';
+
+    button.onclick = () => {
+      window.localStorage.clientid = clientidElement.value;
+    };
+
+    const redirecturi = window.location.origin + '/main.html';
+    document.getElementById('redirecturitext').textContent = redirecturi;
+    document.getElementById('redirectInput').value = redirecturi;
+
+    document.getElementById('copybtn').onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(redirecturi);
+        const copyBtn = document.getElementById('copybtn');
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => {
+          copyBtn.textContent = 'Copy';
+        }, 2000);
+      } catch (err) {
+        console.error('Failed to copy text: ', err);
+      }
+    };
+
+    const generateRandomString = (length) => {
+      const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      const values = crypto.getRandomValues(new Uint8Array(length));
+      return values.reduce((acc, x) => acc + possible[x % possible.length], "");
+    }
+    const codeVerifier  = generateRandomString(64);
+    window.localStorage.codeVerifier = codeVerifier;
+    const sha256 = async (plain) => {
+      const encoder = new TextEncoder()
+      const data = encoder.encode(plain)
+      return window.crypto.subtle.digest('SHA-256', data)
+    }
+    const base64encode = (input) => {
+      return btoa(String.fromCharCode(...new Uint8Array(input)))
+        .replace(/=/g, '')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_');
+    }
+    const hashed = await sha256(codeVerifier)
+    const codeChallenge = base64encode(hashed);
+
+    document.getElementById('codechallenge').value = codeChallenge;
+    button.textContent = 'Connect Spotify';
+    button.removeAttribute('disabled');
+
+    const clientId = new URLSearchParams(window.location.search).get('clientid');
+    if (clientId) {
+      window.localStorage.clientid = clientId;
+      clientidElement.value = clientId;
+      document.querySelector('form').submit();
+    }
+  })();
+  </script>
+</body>
+</html>

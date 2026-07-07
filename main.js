@@ -140,7 +140,10 @@ async function updateButtons() {
   const nameToPlaylist = new Map();
   const favorites = [];
   const playlists = await idbKeyval.get('playlists');
-  if (!playlists) {
+  
+  const buttonsContainer = document.getElementById('buttons');
+  if (!playlists || playlists.length === 0) {
+    buttonsContainer.innerHTML = '<div class="no-operations">No playlists sync' + 'ed yet. Use the Sync buttons to load playlists.</div>';
     return;
   }
   for (const playlist of playlists) {
@@ -150,8 +153,12 @@ async function updateButtons() {
     }
   }
 
-  const buttonsContainer = document.getElementById('buttons');
   buttonsContainer.innerHTML = '';
+
+  if (favorites.length === 0) {
+    buttonsContainer.innerHTML = '<div class="no-operations">No favorites playlists detected. Setup your playlists to get started!</div>';
+    return;
+  }
 
   for (const targetName of favorites) {
     const sourceName = targetName.replace(' (Favorites)', '');
@@ -165,42 +172,55 @@ async function updateButtons() {
     buttonsContainer.appendChild(div);
     div.appendChild(button);
     button.addEventListener('click', async () => {
-      log(`going to filter "${sourceName}" to "${targetName}"`);
-      const sourceId = source.id;
-      const targetId = target.id;
-      const sourcePlaylistItems = await downloadList(`https://api.spotify.com/v1/playlists/${sourceId}/tracks?limit=50`);
-      log('got sourcePlaylistItems. size: ' + sourcePlaylistItems.length);
-      // TODO download target songs and figure out how to not mess with local songs
-      //const targetSongs = await downloadList(`https://api.spotify.com/v1/playlists/${targetId}/tracks?limit=50`);
-      //console.log('targetSongs: ', targetSongs);
+      button.setAttribute('disabled', '');
+      const originalText = button.textContent;
+      button.textContent = 'Filtering & Syncing...';
+      try {
+        log(`going to filter "${sourceName}" to "${targetName}"`);
+        const sourceId = source.id;
+        const targetId = target.id;
+        const sourcePlaylistItems = await downloadList(`https://api.spotify.com/v1/playlists/${sourceId}/tracks?limit=50`);
+        log('got sourcePlaylistItems. size: ' + sourcePlaylistItems.length);
+        // TODO download target songs and figure out how to not mess with local songs
+        //const targetSongs = await downloadList(`https://api.spotify.com/v1/playlists/${targetId}/tracks?limit=50`);
+        //console.log('targetSongs: ', targetSongs);
 
-      const likedSongs = await idbKeyval.get('likedsongs');
-      const likedSongIds = new Set();
-      for (const likedSong of likedSongs) {
-        likedSongIds.add(likedSong.track.id);
-      }
-
-      const filteredTrackIds = [];
-      for (const playlistItem of sourcePlaylistItems) {
-        const trackId = playlistItem.track.id;
-        if (likedSongIds.has(trackId)) {
-          filteredTrackIds.push('spotify:track:' + trackId);
+        const likedSongs = await idbKeyval.get('likedsongs');
+        const likedSongIds = new Set();
+        if (likedSongs) {
+          for (const likedSong of likedSongs) {
+            likedSongIds.add(likedSong.track.id);
+          }
         }
+
+        const filteredTrackIds = [];
+        for (const playlistItem of sourcePlaylistItems) {
+          const trackId = playlistItem.track.id;
+          if (likedSongIds.has(trackId)) {
+            filteredTrackIds.push('spotify:track:' + trackId);
+          }
+        }
+
+        log('filteredTrackIds.length: ' + filteredTrackIds.length);
+        console.log('filteredTrackIds: ', filteredTrackIds);
+        const body = JSON.stringify({
+          uris: filteredTrackIds
+        });
+        await fetchWebApi(`playlists/${targetId}/tracks`, 'PUT', /*queryParams=*/{}, /*fetchParams=*/{body});
+
+        const updateDescriptionFetchParams = {
+          body: JSON.stringify({
+            description: `Updated by Spookify on ${new Date().toDateString()}`
+          })
+        };
+        await fetchWebApi(`playlists/${targetId}`, 'PUT', /*queryParams=*/{}, updateDescriptionFetchParams);
+        log(`successfully synced "${sourceName}" to "${targetName}"`);
+      } catch (err) {
+        log('error during sync: ' + err);
+      } finally {
+        button.removeAttribute('disabled');
+        button.textContent = originalText;
       }
-
-      log('filteredTrackIds.length: ' + filteredTrackIds.length);
-      console.log('filteredTrackIds: ', filteredTrackIds);
-      const body = JSON.stringify({
-        uris: filteredTrackIds
-      });
-      await fetchWebApi(`playlists/${targetId}/tracks`, 'PUT', /*queryParams=*/{}, /*fetchParams=*/{body});
-
-      const updateDescriptionFetchParams = {
-        body: JSON.stringify({
-          description: `Updated by Spookify on ${new Date().toDateString()}`
-        })
-      };
-      await fetchWebApi(`playlists/${targetId}`, 'PUT', /*queryParams=*/{}, updateDescriptionFetchParams);
     });
   }
 }
@@ -281,4 +301,12 @@ async function updateButtons() {
   likedSongsUpdate.removeAttribute('disabled');
   playlistsUpdate.removeAttribute('disabled');
   await updateButtons();
+
+  const logoutBtn = document.getElementById('logoutbtn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', () => {
+      window.localStorage.removeItem('accessToken');
+      window.location.href = '/';
+    });
+  }
 })();

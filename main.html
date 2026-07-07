@@ -1,34 +1,96 @@
 <!DOCTYPE html>
-<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-<link rel=stylesheet href="shared.css">
-<link rel=stylesheet href="main.css"></script>
-<script type=module src="idbKeyval.js"></script>
-<script type=module src="main.js"></script>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Spookify Dashboard - Filter and update your playlists easily.">
+  <title>Dashboard | Spookify 👻</title>
+  
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="stylesheet" href="shared.css">
+  <link rel="stylesheet" href="main.css">
+  <script type="module" src="idbKeyval.js"></script>
+  <script type="module" src="main.js"></script>
+</head>
+<body>
+  <div class="dashboard-wrapper">
+    <header class="dashboard-header">
+      <div class="header-logo">
+        <span class="ghost-icon">👻</span>
+        <h1>Spookify</h1>
+      </div>
+      <div class="header-actions">
+        <button id="logoutbtn" class="header-btn secondary-btn">Disconnect</button>
+      </div>
+    </header>
 
-<div class=split>
-  <div>
-    <div>
-      <div>playlists: <span id=playlistsnum></span></div>
-      <div>last updated: <span id=playlistslastupdated></span></div>
-      <div><button id=playlistsupdate disabled>update playlists</button></div>
-    </div>
-    <br>
+    <main class="dashboard-content">
+      <!-- Main Actions & Controls Column -->
+      <section class="controls-column">
+        <div class="status-grid">
+          <!-- Playlists Card -->
+          <div class="card status-card">
+            <div class="card-icon">📂</div>
+            <div class="card-details">
+              <h3>Playlists</h3>
+              <div class="stat"><span id="playlistsnum" class="loading-placeholder">-</span> cached</div>
+              <div class="timestamp">Last updated: <span id="playlistslastupdated">never</span></div>
+            </div>
+            <button id="playlistsupdate" class="card-btn" disabled>Sync Playlists</button>
+          </div>
 
-    <div>
-      <div>liked songs: <span id=likedsongsnum></span></div>
-      <div>last updated: <span id=likedsongslastupdated></span></div>
-      <div><button id=likedsongsupdate disabled>update liked songs</button></div>
-    </div>
-    <br>
+          <!-- Liked Songs Card -->
+          <div class="card status-card">
+            <div class="card-icon">💖</div>
+            <div class="card-details">
+              <h3>Liked Songs</h3>
+              <div class="stat"><span id="likedsongsnum" class="loading-placeholder">-</span> cached</div>
+              <div class="timestamp">Last updated: <span id="likedsongslastupdated">never</span></div>
+            </div>
+            <button id="likedsongsupdate" class="card-btn" disabled>Sync Liked</button>
+          </div>
+        </div>
 
-    <p>Buttons to generate playlists will appear below. Create a playlist with the same name as another one of your playlists but with " (Favorites)" added to the end of it. For example, to get your favorite songs from a playlist called "Bong", create another playlist called "Bong (Favorites)".</p>
-    <div id=buttons></div>
+        <!-- Info & Instructions Box -->
+        <div class="card info-instruction-card">
+          <h4>How to generate playlists:</h4>
+          <p>Create a playlist with the exact same name as another of your playlists, but with <strong>" (Favorites)"</strong> added to the end. For example:</p>
+          <div class="example-flow">
+            <span class="pill">Bong</span>
+            <span class="arrow">➔</span>
+            <span class="pill purple">Bong (Favorites)</span>
+          </div>
+          <p class="explanation-note">The action buttons to filter and update will automatically appear in the section below.</p>
+        </div>
+
+        <!-- Action Generator Container -->
+        <div class="card generator-card">
+          <h3>Available Operations</h3>
+          <div id="buttons" class="operations-list">
+            <div class="no-operations">No favorites playlists detected. Setup your playlists to get started!</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Logging Terminal Column -->
+      <aside class="terminal-column">
+        <div class="card terminal-card">
+          <div class="terminal-header">
+            <div class="terminal-dots">
+              <span class="dot red"></span>
+              <span class="dot yellow"></span>
+              <span class="dot green"></span>
+            </div>
+            <div class="terminal-title">System Console</div>
+          </div>
+          <div class="terminal-body">
+            <ul id="log"></ul>
+          </div>
+        </div>
+      </aside>
+    </main>
   </div>
-
-  <div>
-    <div>Log</div>
-    <ul id=log></ul>
-  </div>
-</div>
+</body>
+</html>

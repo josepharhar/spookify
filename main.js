@@ -196,15 +196,21 @@ async function updateButtons() {
         const likedSongIds = new Set();
         if (likedSongs) {
           for (const likedSong of likedSongs) {
-            likedSongIds.add(likedSong.track.id);
+            if (likedSong.track && likedSong.track.id) {
+              likedSongIds.add(likedSong.track.id);
+            }
           }
         }
 
         const filteredTrackIds = [];
         for (const playlistItem of sourcePlaylistItems) {
-          const trackId = playlistItem.track.id;
-          if (likedSongIds.has(trackId)) {
-            filteredTrackIds.push('spotify:track:' + trackId);
+          const track = playlistItem.track;
+          if (!track) continue;
+          if (track.is_local || !track.id) {
+            // Always keep local/offline tracks since we cannot check their liked status
+            filteredTrackIds.push(track.uri);
+          } else if (likedSongIds.has(track.id)) {
+            filteredTrackIds.push(track.uri);
           }
         }
 

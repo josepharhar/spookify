@@ -48,7 +48,14 @@ function log(str) {
   console.log(str);
   const li = document.createElement('li');
   li.textContent = str;
-  document.getElementById('log').appendChild(li);
+  const logEl = document.getElementById('log');
+  if (logEl) {
+    logEl.appendChild(li);
+    const container = logEl.parentElement;
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
+  }
 }
 
 async function downloadList(url) {
